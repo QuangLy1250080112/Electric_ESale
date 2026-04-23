@@ -1,13 +1,13 @@
-"""
-Main application entry point
-"""
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
-from app.api.v1.api import api_router
+from .database import engine  # Sửa lại đường dẫn import database
+from . import models           # Import để khởi tạo bảng
+from .routers import products  # Import router sản phẩm của bạn
 
-# Create FastAPI app instance
+# Khởi tạo bảng trong Database (Chạy dòng này để tự tạo file .db hoặc bảng SQL)
+models.Base.metadata.create_all(bind=engine)
+
+# Khởi tạo instance FastAPI
 app = FastAPI(
     title="ESale Backend API",
     description="Electronics E-commerce Platform API",
@@ -16,18 +16,18 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Add CORS middleware
+# Cấu hình CORS (Cho phép Frontend gọi API)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"], # Tạm thời để "*" để test, sau này đổi thành URL của React
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include API routes
-app.include_router(api_router, prefix="/api")
-
+# Kết nối các Router
+# Vì file main.py nằm trong thư mục app, khi include ta gọi trực tiếp
+app.include_router(products.router, prefix="/api/v1")
 
 @app.get("/", tags=["Health"])
 async def root():
@@ -38,15 +38,14 @@ async def root():
         "docs": "/docs"
     }
 
-
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
 
-
 if __name__ == "__main__":
     import uvicorn
+    # Chú ý: nếu bạn chạy lệnh này từ thư mục 'backend', thì path là 'app.main:app'
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
