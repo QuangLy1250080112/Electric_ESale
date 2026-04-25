@@ -1,15 +1,14 @@
-# ESale - E-commerce Electronics Platform
+ESale - Hệ Thống Bán Linh Kiện Điện Tử
+Dự án xây dựng website bán linh kiện điện tử với kiến trúc tách biệt Backend (FastAPI) và Frontend (React).
 
-## Project Overview
+Kiến trúc hệ thống:
+Backend: FastAPI (Python 3.9+)
+Frontend: React.js (Vite)
+Database: PostgreSQL (pgAdmin 4)
+ORM & Migration: SQLAlchemy & Alembic
+API Client: Axios
 
-ESale is an e-commerce platform built with open-source technologies for selling electronic components. This project demonstrates a complete full-stack application with:
-
-- **Backend**: FastAPI (Python) - RESTful API with authentication, CRUD operations
-- **Frontend**: React - Modern web interface
-- **Architecture**: Microservices-ready structure that can run independently or together
-
-## Project Structure
-
+## Cấu trúc dự án
 ```
 ESale/
 ├── backend/
@@ -29,205 +28,69 @@ ESale/
     └── README.md
 ```
 
-## Quick Start
+Hướng dẫn thiết lập:
+# 1. Chuẩn bị (Prerequisites)
+Đã cài đặt Python (3.9 trở lên).
+Đã cài đặt Node.js (LTS version).
+Đã tạo Database tên ESale trong pgAdmin 4.
 
-### Backend Setup
+# 2. Thiết lập Backend
+Mở terminal tại thư mục gốc của dự án:
 
-```bash
-cd backend
+## 2.1. Tạo môi trường ảo
 python -m venv venv
-source venv/Scripts/activate  # Windows
-source venv/bin/activate      # Linux/Mac
-pip install -r requirements.txt
-cp .env.example .env
-python app/main.py
-```
+## 2.2 Kích hoạt môi trường ảo
+Windows:
+.\venv\Scripts\activate
+Mac/Linux:
+source venv/bin/activate
+## 2.3. Di chuyển vào backend và cài đặt thư viện
+cd backend
+pip install fastapi uvicorn sqlalchemy psycopg2 python-dotenv alembic
+Cấu hình biến môi trường Backend:
+Tạo file .env bên trong thư mục backend/ và copy nội dung sau (thay đổi thông tin theo máy):
+DATABASE_URL=postgresql://postgres:123@localhost:5432/ESale
 
-Backend runs at: `http://localhost:8000`
-API Docs: `http://localhost:8000/docs`
+# 3. Đồng bộ Database (Migration)
+Để tạo toàn bộ các bảng vào PostgreSQL dựa trên models.py, chạy lệnh sau (vẫn đang ở thư mục backend và venv đang bật):
+alembic revision --autogenerate -m "Mô tả thay đổi"
+alembic upgrade head
 
-### Frontend Setup
-
-```bash
+# 4. Thiết lập Frontend
+Mở một terminal mới (không cần bật venv) tại thư mục gốc dự án:
 cd frontend
 npm install
-cp .env.example .env
+Cấu hình biến môi trường Frontend:
+Tạo file .env bên trong thư mục frontend/ và copy nội dung:
+VITE_API_URL=http://localhost:8000
+
+
+# Cách vận hành dự án
+Để dự án chạy được, cần khởi động đồng thời cả 2 server:
+
+## Khởi động Backend:
+Mở terminal tại backend/.
+Kích hoạt venv.
+Chạy lệnh:
+
+uvicorn app.main:app --reload
+API Documentation (Swagger UI): http://localhost:8000/docs
+
+## Khởi động Frontend
+Mở terminal tại frontend/.
+Chạy lệnh:
 npm run dev
-```
+Giao diện người dùng: http://localhost:5173
 
-Frontend runs at: `http://localhost:5173`
+# 5. Quy trình làm việc nhóm (Workflow)
+Khi có thay đổi về Cấu trúc Database:
+Người sửa: Cập nhật backend/app/models.py.
+Người sửa: Chạy lệnh tạo file migration:
+alembic revision --autogenerate -m "Mô tả thay đổi bảng"
+Người sửa: Commit và Push file mới trong migrations/versions/ lên GitHub.
+Cả nhóm: Pull code về và chạy lệnh để cập nhật DB cá nhân:
+alembic upgrade head
+Lưu ý quan trọng:
+KHÔNG push thư mục venv/, node_modules/ và các file .env lên GitHub.
 
-## Features
-
-### Backend
-- ✅ User Authentication & Authorization
-- ✅ Product Management (CRUD)
-- ✅ Category Management
-- ✅ Shopping Cart
-- ✅ Order Management
-- ✅ Password hashing with bcrypt
-- ✅ JWT token-based authentication
-- ✅ Input validation
-- ✅ Error handling
-- ✅ Swagger UI documentation
-
-### Frontend
-- ✅ Responsive React application
-- ✅ User authentication pages (Login/Register)
-- ✅ Product browsing and search
-- ✅ Shopping cart
-- ✅ Order history
-- ✅ User dashboard
-- ✅ State management with Zustand
-- ✅ API service layer
-- ✅ Custom hooks
-
-## Database
-
-Currently uses SQLite for development. Ready to be switched to:
-- PostgreSQL
-- MySQL
-- MariaDB
-
-Update `DATABASE_URL` in `.env` to change database.
-
-## API Endpoints
-
-### Authentication
-- `POST /api/v1/auth/register` - Register
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/refresh-token` - Refresh token
-- `POST /api/v1/auth/logout` - Logout
-
-### Users
-- `GET /api/v1/users/me` - Get current user
-- `PUT /api/v1/users/me` - Update user
-- `GET /api/v1/users` - Get all (admin)
-- `GET /api/v1/users/{id}` - Get by ID (admin)
-
-### Products
-- `GET /api/v1/products` - Get all
-- `GET /api/v1/products/{id}` - Get one
-- `POST /api/v1/products` - Create (admin)
-- `PUT /api/v1/products/{id}` - Update (admin)
-- `DELETE /api/v1/products/{id}` - Delete (admin)
-
-### Categories
-- `GET /api/v1/categories` - Get all
-- `GET /api/v1/categories/{id}` - Get one
-- `POST /api/v1/categories` - Create (admin)
-- `PUT /api/v1/categories/{id}` - Update (admin)
-- `DELETE /api/v1/categories/{id}` - Delete (admin)
-
-### Shopping Cart
-- `GET /api/v1/cart` - Get cart
-- `POST /api/v1/cart/items` - Add item
-- `PUT /api/v1/cart/items/{id}` - Update item
-- `DELETE /api/v1/cart/items/{id}` - Remove item
-- `DELETE /api/v1/cart` - Clear cart
-
-### Orders
-- `GET /api/v1/orders` - Get user's orders
-- `GET /api/v1/orders/{id}` - Get order
-- `POST /api/v1/orders` - Create order
-- `PUT /api/v1/orders/{id}` - Update (admin)
-- `DELETE /api/v1/orders/{id}` - Cancel order
-
-## Testing with Postman
-
-1. Download and install [Postman](https://www.postman.com/downloads/)
-2. The API automatically provides Swagger documentation at `/docs`
-3. Use the collection to test all endpoints
-
-## Technologies Used
-
-### Backend
-- FastAPI - Modern web framework
-- SQLAlchemy - ORM
-- Pydantic - Data validation
-- JWT - Authentication
-- Bcrypt - Password hashing
-- Uvicorn - ASGI server
-
-### Frontend
-- React 18 - UI library
-- React Router v6 - Routing
-- Axios - HTTP client
-- Zustand - State management
-- Vite - Build tool
-
-### Development
-- Python 3.10+
-- Node.js 16+
-- npm or yarn
-
-## Next Steps
-
-1. **Database Setup**
-   - Create database schema
-   - Run migrations
-   - Add sample data
-
-2. **Backend Implementation**
-   - Implement service layer logic
-   - Add middleware for logging
-   - Add email notifications
-   - Add payment integration
-
-3. **Frontend Enhancement**
-   - Implement all pages
-   - Add styling with CSS/SCSS
-   - Add form validations
-   - Add error handling
-   - Add loading states
-
-4. **Testing**
-   - Write unit tests
-   - Write integration tests
-   - Add E2E tests
-
-5. **Deployment**
-   - Dockerize applications
-   - Set up CI/CD pipeline
-   - Deploy to cloud (AWS, Azure, Heroku)
-
-6. **Additional Features**
-   - Reviews and ratings
-   - Wishlist
-   - Product recommendations
-   - Admin dashboard
-   - Analytics
-   - Email notifications
-   - Payment gateway
-   - Shipping integration
-
-## Troubleshooting
-
-### Backend Issues
-- If port 8000 is in use: Change `SERVER_PORT` in `.env`
-- If database error: Delete `test.db` and restart
-- If import errors: Run `pip install -r requirements.txt` again
-
-### Frontend Issues
-- If port 5173 is in use: Vite will use next available port
-- If API calls fail: Check backend is running and `VITE_API_URL` is correct
-- If modules not found: Run `npm install` again
-
-## Contributing
-
-1. Create a new branch for features
-2. Make your changes
-3. Test thoroughly
-4. Create a pull request
-
-## License
-
-This project is open source and available under MIT License.
-
-## Support
-
-For issues or questions, please create an issue on GitHub.
-
----
-
-**Happy Coding! 🚀**
+Mọi thông tin nhạy cảm phải được giữ trong file .env cá nhân.
