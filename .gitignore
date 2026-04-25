@@ -1,0 +1,17 @@
+# Python - Backend
+backend/venv/
+backend/__pycache__/
+backend/.env
+backend/migrations/versions/*.pyc
+
+# Node - Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Hệ thống & IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
