@@ -1,11 +1,13 @@
 # ESale Project Context
 
 ## Current Status
+
 - Backend is running at `http://localhost:8000` (Fixed dependencies and config)
 - Frontend is running at `http://localhost:5173`
 - Authentication is working with `admin` / `123`
 
 ## Recent Changes
+
 - [x] Fix API prefix mismatch between frontend and backend
 - [x] Clean up and optimize initial_data.py script
 - [x] Resolved "yellow highlight" IDE warnings in initial_data.py
@@ -20,19 +22,28 @@
 - [x] **Resolved `ModuleNotFoundError: No module named 'jose'` and `passlib` by installing missing dependencies**
 - [x] **Fixed `AttributeError: 'Settings' object has no attribute 'API_V1_STR'` by adding it to config**
 - [x] **Verified backend starts successfully on Python 3.13**
+- [x] **Implemented Product Image management with `AnhSP` table and associated relationships**
+- [x] **Fixed Product creation by seeding default Supplier and Category records**
+- [x] **Added cascade delete for Products and fixed circular FK reference (ID_HinhAnh) during deletion**
+- [x] **Fixed UI field mapping (`tenSP`, `gia`, `mota`) and removed hardcoded image fallbacks**
+- [x] **Improved Admin page with dynamic Category/Supplier fetching and better error handling**
+- [x] **Implemented Delete Product functionality for Admin users in both List and Detail views**
 
 ## Technical Details
+
 - **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT)
 - **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React
-- **Database**: PostgreSQL (Development: SQLite)
+- **Database**: PostgreSQL (Active)
 - **API Base URL**: `http://localhost:8000/api/v1`
 
 ## Environment Setup
+
 - **Virtual Environment**: Located at `venv/` in the project root.
 - **Python Interpreter**: Use the interpreter within `venv` to avoid `ModuleNotFoundError`.
 - **Node Modules**: Installed `lucide-react` for modern icons.
 
 ## Guidelines
+
 - Follow TDD approach (validate with tests).
 - Keep code minimal and clean (SOLID, DRY, KISS).
 - Update this file after each major modification.

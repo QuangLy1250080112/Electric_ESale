@@ -43,3 +43,15 @@ export const addProductImage = async (productId, imageUrl) => {
   const response = await api.post(`/v1/products/${productId}/images`, { HinhAnh_url: imageUrl })
   return response.data
 }
+
+// Delete product
+export const deleteProduct = async (id) => {
+  const response = await api.delete(`/v1/products/${id}`)
+  return response.data
+}
+
+// Get all suppliers
+export const getSuppliers = async () => {
+  const response = await api.get('/v1/products/suppliers/all')
+  return response.data
+}

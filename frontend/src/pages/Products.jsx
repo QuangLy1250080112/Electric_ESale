@@ -69,7 +69,7 @@ export default function Products() {
         <div className="results-count mb-4">
           Tìm thấy <strong>{filtered.length}</strong> sản phẩm phù hợp
         </div>
-        <ProductList products={filtered} loading={loading} error={error} />
+        <ProductList products={filtered} loading={loading} error={error} onRefresh={refreshProducts} />
       </div>
 
       <ProductModal 

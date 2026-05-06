@@ -1,20 +1,20 @@
-"""
-Categories endpoints (DanhMuc)
-- Get categories
-- Manage categories (admin)
-"""
-
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from typing import List
+from app.core.database import get_db
+from app.models.product import DanhMuc
+from app.schemas.product import DanhMucResponse
 
 router = APIRouter()
 
 
-@router.get("", tags=["Categories"])
-async def get_categories():
+@router.get("", response_model=List[DanhMucResponse], tags=["Categories"])
+async def get_categories(db: Session = Depends(get_db)):
     """
     Get all categories (DanhMuc)
     """
-    return {"message": "Get categories - to be implemented"}
+    categories = db.query(DanhMuc).all()
+    return categories
 
 
 @router.get("/{ID_danhmuc}", tags=["Categories"])

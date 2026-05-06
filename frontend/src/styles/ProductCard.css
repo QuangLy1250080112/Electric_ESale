@@ -113,3 +113,7 @@
 .product-actions {
   margin-top: auto;
 }
+
+.btn-danger-icon:hover {
+  background: #ef4444;
+}

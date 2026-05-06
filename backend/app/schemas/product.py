@@ -23,6 +23,7 @@ class SanPhamUpdate(BaseModel):
 
 class SanPhamResponse(SanPhamBase):
     ID_sanpham: int
+    HinhAnh_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

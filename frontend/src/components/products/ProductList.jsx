@@ -1,7 +1,7 @@
 import ProductCard from './ProductCard'
 import Loader from '../common/Loader'
 
-export default function ProductList({ products, loading, error }) {
+export default function ProductList({ products, loading, error, onRefresh }) {
   if (loading) return (
     <div className="flex justify-center items-center py-20">
       <Loader />
@@ -24,7 +24,7 @@ export default function ProductList({ products, loading, error }) {
   return (
     <div className="product-grid">
       {products.map((product) => (
-        <ProductCard key={product.ID_sanpham || product.id} product={product} />
+        <ProductCard key={product.ID_sanpham || product.id} product={product} onDelete={onRefresh} />
       ))}
     </div>
   )

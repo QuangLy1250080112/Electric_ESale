@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, Package, List, Users, ShoppingCart, Upload, X } from 'lucide-react'
 import * as productService from '../services/productService'
 import '../styles/Admin.css'
@@ -12,10 +12,37 @@ export default function Admin() {
     ID_danhmuc: 1,
     supplier_ID: 1
   })
+  const [categories, setCategories] = useState([])
+  const [suppliers, setSuppliers] = useState([])
   const [images, setImages] = useState([])
   const [previews, setPreviews] = useState([])
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [cats, sups] = await Promise.all([
+          productService.getCategories(),
+          productService.getSuppliers()
+        ])
+        setCategories(cats)
+        setSuppliers(sups)
+        
+        setFormData(prev => ({ 
+          ...prev, 
+          ID_danhmuc: cats.length > 0 ? cats[0].ID_danhmuc : 1,
+          supplier_ID: sups.length > 0 ? sups[0].ID_NhaCungCap : 1
+        }))
+      } catch (err) {
+        console.error('Failed to fetch initial data:', err)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+    fetchInitialData()
+  }, [])
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files)
@@ -41,11 +68,16 @@ export default function Admin() {
         gia: parseFloat(formData.gia)
       })
 
-      // 2. Upload Images
-      for (const img of images) {
-        // Simulated URL for now
-        const simulatedUrl = `https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop`
-        await productService.addProductImage(product.ID_sanpham, simulatedUrl)
+      if (!product || !product.ID_sanpham) {
+        throw new Error('Không nhận được phản hồi hợp lệ từ máy chủ.')
+      }
+
+      // 2. Upload Images (Simulated for now, but with correct ID)
+      if (images.length > 0) {
+        for (const img of images) {
+          const simulatedUrl = `https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop`
+          await productService.addProductImage(product.ID_sanpham, simulatedUrl)
+        }
       }
 
       alert('Thêm sản phẩm thành công!')
@@ -53,13 +85,14 @@ export default function Admin() {
         tenSP: '',
         mota: '',
         gia: '',
-        ID_danhmuc: 1,
-        supplier_ID: 1
+        ID_danhmuc: categories.length > 0 ? categories[0].ID_danhmuc : 1,
+        supplier_ID: suppliers.length > 0 ? suppliers[0].ID_NhaCungCap : 1
       })
       setImages([])
       setPreviews([])
     } catch (err) {
-      alert('Lỗi: ' + (err.response?.data?.detail || 'Không thể thêm sản phẩm'))
+      console.error('Submit error:', err)
+      alert('Lỗi: ' + (err.response?.data?.detail || err.message || 'Không thể thêm sản phẩm'))
     } finally {
       setLoading(false)
     }
@@ -144,22 +177,29 @@ export default function Admin() {
                     value={formData.ID_danhmuc}
                     onChange={(e) => setFormData({...formData, ID_danhmuc: parseInt(e.target.value)})}
                   >
-                    <option value={1}>Điện thoại</option>
-                    <option value={2}>Laptop</option>
-                    <option value={3}>Phụ kiện</option>
-                    <option value={4}>Máy tính bảng</option>
+                    {categories.map(cat => (
+                      <option key={cat.ID_danhmuc} value={cat.ID_danhmuc}>
+                        {cat.tenDanhMuc}
+                      </option>
+                    ))}
+                    {categories.length === 0 && <option value={1}>Mặc định</option>}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Nhà cung cấp ID</label>
-                  <input 
+                  <label className="form-label">Nhà cung cấp</label>
+                  <select 
                     className="form-control"
-                    type="number" 
-                    value={formData.supplier_ID} 
+                    value={formData.supplier_ID}
                     onChange={(e) => setFormData({...formData, supplier_ID: parseInt(e.target.value)})}
-                    required 
-                  />
+                  >
+                    {suppliers.map(sup => (
+                      <option key={sup.ID_NhaCungCap} value={sup.ID_NhaCungCap}>
+                        {sup.tenNhaCungCap}
+                      </option>
+                    ))}
+                    {suppliers.length === 0 && <option value={1}>Mặc định</option>}
+                  </select>
                 </div>
 
                 <div className="form-group full-width">
