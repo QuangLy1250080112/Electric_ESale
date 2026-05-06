@@ -37,3 +37,9 @@ export const addProduct = async (productData) => {
   const response = await api.post('/v1/products', productData)
   return response.data
 }
+
+// Add product image
+export const addProductImage = async (productId, imageUrl) => {
+  const response = await api.post(`/v1/products/${productId}/images`, { HinhAnh_url: imageUrl })
+  return response.data
+}

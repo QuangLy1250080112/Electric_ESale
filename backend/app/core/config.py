@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     
     # API
     API_VERSION: str = "v1"
+    API_V1_STR: str = "/api/v1"
     
     class Config:
         """Pydantic config"""

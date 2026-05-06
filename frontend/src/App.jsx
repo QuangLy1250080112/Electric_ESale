@@ -1,6 +1,7 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './components/layout/MainLayout'
 import AuthLayout from './components/layout/AuthLayout'
+import { useAuthStore } from './store/authStore'
 
 // Pages
 import Home from './pages/Home'
@@ -11,8 +12,17 @@ import Checkout from './pages/Checkout'
 import OrderHistory from './pages/OrderHistory'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
+import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
+
+// Protected Route component
+const AdminRoute = ({ children }) => {
+  const { user, isLoggedIn } = useAuthStore()
+  if (!isLoggedIn || !user?.is_admin) {
+    return <Navigate to="/login" />
+  }
+  return children
+}
 
 function App() {
   return (
@@ -26,7 +36,14 @@ function App() {
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="orders" element={<OrderHistory />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route 
+            path="admin" 
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            } 
+          />
         </Route>
 
         {/* Auth Routes */}
