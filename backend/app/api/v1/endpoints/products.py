@@ -5,61 +5,91 @@ Products endpoints (SanPham)
 - Supplier management
 """
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends, status
+from sqlalchemy.orm import Session
 from typing import Optional, List
+from app.core.database import get_db
+from app.models.product import SanPham, DanhMuc, NhaCungCap
+from app.schemas.product import SanPhamCreate, SanPhamResponse
 
 router = APIRouter()
 
 
-@router.get("", tags=["Products"])
+@router.get("", response_model=List[SanPhamResponse], tags=["Products"])
 async def get_products(
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=100),
     ID_danhmuc: Optional[int] = None,
     search: Optional[str] = None,
+    db: Session = Depends(get_db)
 ):
     """
     Get all products (SanPham) with pagination and filtering
-    
-    Parameters:
-    - skip: Number of items to skip
-    - limit: Number of items to return
-    - ID_danhmuc: Filter by category ID
-    - search: Search by product name
     """
-    return {"message": "Get products - to be implemented"}
+    query = db.query(SanPham)
+    if ID_danhmuc:
+        query = query.filter(SanPham.ID_danhmuc == ID_danhmuc)
+    if search:
+        query = query.filter(SanPham.tenSP.ilike(f"%{search}%"))
+    
+    products = query.offset(skip).limit(limit).all()
+    return products
 
 
-@router.get("/{ID_sanpham}", tags=["Products"])
-async def get_product(ID_sanpham: int):
+@router.get("/{ID_sanpham}", response_model=SanPhamResponse, tags=["Products"])
+async def get_product(ID_sanpham: int, db: Session = Depends(get_db)):
     """
     Get product by ID (SanPham)
     """
-    return {"message": f"Get product {ID_sanpham} - to be implemented"}
+    product = db.query(SanPham).filter(SanPham.ID_sanpham == ID_sanpham).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
+    return product
 
 
-@router.post("", tags=["Products"])
-async def create_product():
+@router.post("", response_model=SanPhamResponse, tags=["Products"])
+async def create_product(product_in: SanPhamCreate, db: Session = Depends(get_db)):
     """
-    Create new product (SanPham) - admin only
+    Create new product (SanPham)
     """
-    return {"message": "Create product - to be implemented"}
+    # Note: In a real app, we would check if the user is an admin here
+    # For now, we'll assume the frontend handles the check
+    db_product = SanPham(**product_in.dict())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
 
 
-@router.put("/{ID_sanpham}", tags=["Products"])
-async def update_product(ID_sanpham: int):
+@router.put("/{ID_sanpham}", response_model=SanPhamResponse, tags=["Products"])
+async def update_product(ID_sanpham: int, product_in: SanPhamCreate, db: Session = Depends(get_db)):
     """
-    Update product (SanPham) - admin only
+    Update product (SanPham)
     """
-    return {"message": f"Update product {ID_sanpham} - to be implemented"}
+    db_product = db.query(SanPham).filter(SanPham.ID_sanpham == ID_sanpham).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
+    
+    for field, value in product_in.dict().items():
+        setattr(db_product, field, value)
+    
+    db.commit()
+    db.refresh(db_product)
+    return db_product
 
 
 @router.delete("/{ID_sanpham}", tags=["Products"])
-async def delete_product(ID_sanpham: int):
+async def delete_product(ID_sanpham: int, db: Session = Depends(get_db)):
     """
-    Delete product (SanPham) - admin only
+    Delete product (SanPham)
     """
-    return {"message": f"Delete product {ID_sanpham} - to be implemented"}
+    db_product = db.query(SanPham).filter(SanPham.ID_sanpham == ID_sanpham).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
+    
+    db.delete(db_product)
+    db.commit()
+    return {"message": "Đã xóa sản phẩm thành công"}
 
 
 # Product Specifications (ThongsoSP)

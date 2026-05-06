@@ -1,96 +1,56 @@
-ESale - Hệ Thống Bán Linh Kiện Điện Tử
-Dự án xây dựng website bán linh kiện điện tử với kiến trúc tách biệt Backend (FastAPI) và Frontend (React).
+# ESale - Electronics E-commerce Platform
 
-Kiến trúc hệ thống:
-Backend: FastAPI (Python 3.9+)
-Frontend: React.js (Vite)
-Database: PostgreSQL (pgAdmin 4)
-ORM & Migration: SQLAlchemy & Alembic
-API Client: Axios
+Dự án website thương mại điện tử chuyên về đồ điện tử, sử dụng FastAPI (Backend) và React (Frontend).
 
-## Cấu trúc dự án
-```
+## Cấu trúc Project
+
+```text
 ESale/
-├── backend/
-│   ├── app/
-│   ├── tests/
-│   ├── migrations/
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── README.md
-│
-└── frontend/
-    ├── src/
-    ├── public/
-    ├── package.json
-    ├── vite.config.js
-    ├── .env.example
-    └── README.md
+├── backend/                # Thư mục chứa mã nguồn Backend (FastAPI)
+│   ├── app/                # Mã nguồn ứng dụng chính
+│   │   ├── api/            # Các route API
+│   │   │   └── v1/         # Phiên bản 1 của API
+│   │   │       ├── endpoints/ # Các logic xử lý endpoint (auth, products, etc.)
+│   │   │       └── api.py  # Router tổng hợp
+│   │   ├── core/           # Cấu hình hệ thống (database, security, config)
+│   │   ├── models/         # Các model SQLAlchemy (Database models)
+│   │   ├── schemas/        # Các model Pydantic (Request/Response schemas)
+│   │   ├── services/       # Business logic phức tạp (nếu có)
+│   │   ├── utils/          # Các hàm tiện ích bổ trợ
+│   │   ├── initial_data.py # Script khởi tạo dữ liệu mẫu (admin, guest)
+│   │   └── main.py         # Điểm khởi đầu của ứng dụng Backend
+│   ├── migrations/         # Thư mục quản lý database migrations (Alembic)
+│   ├── requirements.txt    # Danh sách thư viện Python cần thiết
+│   └── README.md           # Hướng dẫn chi tiết cho Backend
+├── frontend/               # Thư mục chứa mã nguồn Frontend (React + Vite)
+│   ├── src/                # Mã nguồn ứng dụng React
+│   │   ├── components/     # Các UI components tái sử dụng (Header, Footer, Auth, Product)
+│   │   ├── pages/          # Các trang chính của website (Home, Products, Login, etc.)
+│   │   ├── services/       # Các hàm gọi API (api.js, authService, productService)
+│   │   ├── store/          # Quản lý trạng thái ứng dụng (Zustand)
+│   │   ├── styles/         # CSS và các định dạng giao diện
+│   │   ├── App.jsx         # Component gốc của ứng dụng
+│   │   └── main.jsx        # Điểm khởi đầu của ứng dụng React
+│   ├── package.json        # Danh sách thư viện và script Frontend
+│   └── README.md           # Hướng dẫn chi tiết cho Frontend
+└── README.md               # File này (Tổng quan dự án)
 ```
 
-Hướng dẫn thiết lập:
-# 1. Chuẩn bị (Prerequisites)
-Đã cài đặt Python (3.9 trở lên).
-Đã cài đặt Node.js (LTS version).
-Đã tạo Database tên ESale trong pgAdmin 4.
+## Tài khoản truy cập
 
-# 2. Thiết lập Backend
-Mở terminal tại thư mục gốc của dự án:
+Dự án đã được khởi tạo với 2 tài khoản mẫu:
+- **Admin**: `tenTK: admin`, `matkhau: 123` (Có quyền thêm sản phẩm)
+- **Guest**: `tenTK: guest`, `matkhau: 123` (Quyền người dùng cơ bản)
 
-## 2.1. Tạo môi trường ảo
-python -m venv venv
-## 2.2 Kích hoạt môi trường ảo
-Windows:
-.\venv\Scripts\activate
-Mac/Linux:
-source venv/bin/activate
-## 2.3. Di chuyển vào backend và cài đặt thư viện
-cd backend
-pip install fastapi uvicorn sqlalchemy psycopg2 python-dotenv alembic
-Cấu hình biến môi trường Backend:
-Tạo file .env bên trong thư mục backend/ và copy nội dung sau (thay đổi thông tin theo máy):
-DATABASE_URL=postgresql://postgres:123@localhost:5432/ESale
+## Hướng dẫn chạy nhanh
 
-# 3. Đồng bộ Database (Migration)
-Để tạo toàn bộ các bảng vào PostgreSQL dựa trên models.py, chạy lệnh sau (vẫn đang ở thư mục backend và venv đang bật):
-alembic revision --autogenerate -m "Mô tả thay đổi"
-alembic upgrade head
+### Backend
+1. `cd backend`
+2. `pip install -r requirements.txt`
+3. `python app/initial_data.py` (Để tạo tài khoản mẫu)
+4. `python app/main.py`
 
-# 4. Thiết lập Frontend
-Mở một terminal mới (không cần bật venv) tại thư mục gốc dự án:
-cd frontend
-npm install
-Cấu hình biến môi trường Frontend:
-Tạo file .env bên trong thư mục frontend/ và copy nội dung:
-VITE_API_URL=http://localhost:8000
-
-
-# Cách vận hành dự án
-Để dự án chạy được, cần khởi động đồng thời cả 2 server:
-
-## Khởi động Backend:
-Mở terminal tại backend/.
-Kích hoạt venv.
-Chạy lệnh:
-
-uvicorn app.main:app --reload
-API Documentation (Swagger UI): http://localhost:8000/docs
-
-## Khởi động Frontend
-Mở terminal tại frontend/.
-Chạy lệnh:
-npm run dev
-Giao diện người dùng: http://localhost:5173
-
-# 5. Quy trình làm việc nhóm (Workflow)
-Khi có thay đổi về Cấu trúc Database:
-Người sửa: Cập nhật backend/app/models.py.
-Người sửa: Chạy lệnh tạo file migration:
-alembic revision --autogenerate -m "Mô tả thay đổi bảng"
-Người sửa: Commit và Push file mới trong migrations/versions/ lên GitHub.
-Cả nhóm: Pull code về và chạy lệnh để cập nhật DB cá nhân:
-alembic upgrade head
-Lưu ý quan trọng:
-KHÔNG push thư mục venv/, node_modules/ và các file .env lên GitHub.
-
-Mọi thông tin nhạy cảm phải được giữ trong file .env cá nhân.
+### Frontend
+1. `cd frontend`
+2. `npm install`
+3. `npm run dev`

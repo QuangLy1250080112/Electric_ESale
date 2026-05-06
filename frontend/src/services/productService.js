@@ -31,3 +31,9 @@ export const getCategory = async (id) => {
   const response = await api.get(`/v1/categories/${id}`)
   return response.data
 }
+
+// Add new product
+export const addProduct = async (productData) => {
+  const response = await api.post('/v1/products', productData)
+  return response.data
+}

@@ -7,8 +7,8 @@ export const register = async (userData) => {
 }
 
 // Login user
-export const login = async (email, password) => {
-  const response = await api.post('/v1/auth/login', { email, password })
+export const login = async (tenTK, matkhau) => {
+  const response = await api.post('/v1/auth/login', { tenTK, matkhau })
   if (response.data.access_token) {
     localStorage.setItem('access_token', response.data.access_token)
   }

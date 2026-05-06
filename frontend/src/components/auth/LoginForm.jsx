@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as authService from '../../services/authService'
 import { useAuthStore } from '../../store/authStore'
 
 export default function LoginForm() {
-  const [formData, setFormData] = useState({ email: '', password: '' })
+  const [formData, setFormData] = useState({ tenTK: '', matkhau: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { setUser, setToken } = useAuthStore()
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -17,11 +19,12 @@ export default function LoginForm() {
     e.preventDefault()
     try {
       setLoading(true)
-      const data = await authService.login(formData.email, formData.password)
+      const data = await authService.login(formData.tenTK, formData.matkhau)
       setToken(data.access_token)
       setUser(data.user)
+      navigate('/')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed')
+      setError(err.response?.data?.detail || 'Đăng nhập thất bại')
     } finally {
       setLoading(false)
     }
@@ -29,33 +32,35 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="login-form">
-      <h2>Login</h2>
+      <h2>Đăng nhập</h2>
       {error && <div className="error-message">{error}</div>}
 
       <div className="form-group">
-        <label>Email</label>
+        <label>Tên tài khoản</label>
         <input
-          type="email"
-          name="email"
-          value={formData.email}
+          type="text"
+          name="tenTK"
+          placeholder="admin hoặc guest"
+          value={formData.tenTK}
           onChange={handleChange}
           required
         />
       </div>
 
       <div className="form-group">
-        <label>Password</label>
+        <label>Mật khẩu</label>
         <input
           type="password"
-          name="password"
-          value={formData.password}
+          name="matkhau"
+          placeholder="123"
+          value={formData.matkhau}
           onChange={handleChange}
           required
         />
       </div>
 
       <button type="submit" disabled={loading} className="btn-primary">
-        {loading ? 'Loading...' : 'Login'}
+        {loading ? 'Đang xử lý...' : 'Đăng nhập'}
       </button>
     </form>
   )
