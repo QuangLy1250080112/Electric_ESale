@@ -27,17 +27,18 @@
 - [x] **Added cascade delete for Products and fixed circular FK reference (ID_HinhAnh) during deletion**
 - [x] **Fixed UI field mapping (`tenSP`, `gia`, `mota`) and removed hardcoded image fallbacks**
 - [x] **Improved Admin page with dynamic Category/Supplier fetching and better error handling**
-- [x] **Relocated image storage to `frontend/public/images/` for repository persistence**
-- [x] **Configured Backend to save uploads directly to Frontend public folder**
-- [x] **Updated Database image paths to use `/images/` prefix, served by Vite dev server**
-- [x] **Maintained legacy support for `/uploads/` folder if it exists in Backend root**
-- [x] **Updated `getImageUrl` utility to correctly handle both Frontend-served and Backend-served images**
+- [x] **Fixed image upload path by correcting project root calculation (added missing dirname call)**
+- [x] **Moved misplaced images from `backend/frontend` to the correct `frontend/public` directory and cleaned up**
+- [x] **Implemented automatic image file deletion from filesystem when a product is deleted**
+- [x] **Consolidated image storage to `frontend/public/images/products` and removed redundant `backend/uploads` folder**
+- [x] **Cleaned up code and utilities to remove all references to legacy `/uploads` path**
 
 ## Technical Details
 
 - **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT)
 - **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React
 - **Database**: PostgreSQL (Active)
+- **Image Storage**: `frontend/public/images/products` (Shared via Git)
 - **API Base URL**: `http://localhost:8000/api/v1`
 
 ## Environment Setup
