@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     # API
     API_VERSION: str = "v1"
     API_V1_STR: str = "/api/v1"
+
+    # Uploads
+    # Saving to frontend/public/images ensures images are in the repo
+    UPLOAD_DIR: str = "../frontend/public/images"
     
     class Config:
         """Pydantic config"""

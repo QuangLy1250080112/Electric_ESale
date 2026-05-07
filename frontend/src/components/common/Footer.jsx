@@ -42,7 +42,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; 2024 ESale - Thiết kế bởi Antigravity. Tất cả quyền được bảo lưu.</p>
+        <p>&copy; 2026 ESale </p>
         <div className="social-links">
           <a href="#" title="Facebook"><MessageCircle size={20} /></a>
           <a href="#" title="Twitter"><Send size={20} /></a>

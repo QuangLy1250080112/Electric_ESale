@@ -20,9 +20,8 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 # Create uploads directory if it doesn't exist
-UPLOAD_DIR = "uploads"
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
+if not os.path.exists(settings.UPLOAD_DIR):
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 # Add CORS middleware
 app.add_middleware(
@@ -33,8 +32,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+# Serve static files (Legacy support)
+if os.path.exists("uploads"):
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")

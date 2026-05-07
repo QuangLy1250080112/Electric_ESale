@@ -11,6 +11,7 @@ from typing import Optional, List
 import os
 import shutil
 import uuid
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.product import SanPham, DanhMuc, NhaCungCap, AnhSP
 from app.schemas.product import SanPhamCreate, SanPhamResponse, DanhMucResponse
@@ -154,9 +155,9 @@ async def add_product_image(
         raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
         
     # Save file
-    upload_dir = "uploads"
+    upload_dir = settings.UPLOAD_DIR
     if not os.path.exists(upload_dir):
-        os.makedirs(upload_dir)
+        os.makedirs(upload_dir, exist_ok=True)
         
     file_extension = os.path.splitext(file.filename)[1]
     file_name = f"{uuid.uuid4()}{file_extension}"
@@ -166,7 +167,7 @@ async def add_product_image(
         shutil.copyfileobj(file.file, buffer)
         
     # Create image record
-    image_url = f"/uploads/{file_name}"
+    image_url = f"/images/{file_name}"
     db_image = AnhSP(ID_sanpham=ID_sanpham, HinhAnh_url=image_url)
     db.add(db_image)
     db.commit()

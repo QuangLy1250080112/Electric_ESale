@@ -27,10 +27,11 @@
 - [x] **Added cascade delete for Products and fixed circular FK reference (ID_HinhAnh) during deletion**
 - [x] **Fixed UI field mapping (`tenSP`, `gia`, `mota`) and removed hardcoded image fallbacks**
 - [x] **Improved Admin page with dynamic Category/Supplier fetching and better error handling**
-- [x] **Implemented real product image upload using `multipart/form-data` and `UploadFile`**
-- [x] **Configured Backend to save uploaded images to `uploads/` directory and serve them as static files**
-- [x] **Updated Frontend `productService` and Admin components to handle real file uploads**
-- [x] **Created `getImageUrl` utility in Frontend to correctly display local and remote image URLs**
+- [x] **Relocated image storage to `frontend/public/images/` for repository persistence**
+- [x] **Configured Backend to save uploads directly to Frontend public folder**
+- [x] **Updated Database image paths to use `/images/` prefix, served by Vite dev server**
+- [x] **Maintained legacy support for `/uploads/` folder if it exists in Backend root**
+- [x] **Updated `getImageUrl` utility to correctly handle both Frontend-served and Backend-served images**
 
 ## Technical Details
 
