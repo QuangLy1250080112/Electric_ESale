@@ -27,7 +27,10 @@
 - [x] **Added cascade delete for Products and fixed circular FK reference (ID_HinhAnh) during deletion**
 - [x] **Fixed UI field mapping (`tenSP`, `gia`, `mota`) and removed hardcoded image fallbacks**
 - [x] **Improved Admin page with dynamic Category/Supplier fetching and better error handling**
-- [x] **Implemented Delete Product functionality for Admin users in both List and Detail views**
+- [x] **Implemented real product image upload using `multipart/form-data` and `UploadFile`**
+- [x] **Configured Backend to save uploaded images to `uploads/` directory and serve them as static files**
+- [x] **Updated Frontend `productService` and Admin components to handle real file uploads**
+- [x] **Created `getImageUrl` utility in Frontend to correctly display local and remote image URLs**
 
 ## Technical Details
 

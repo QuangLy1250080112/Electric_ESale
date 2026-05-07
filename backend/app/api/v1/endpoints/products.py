@@ -5,9 +5,12 @@ Products endpoints (SanPham)
 - Supplier management
 """
 
-from fastapi import APIRouter, Query, HTTPException, Depends, status
+from fastapi import APIRouter, Query, HTTPException, Depends, status, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import Optional, List
+import os
+import shutil
+import uuid
 from app.core.database import get_db
 from app.models.product import SanPham, DanhMuc, NhaCungCap, AnhSP
 from app.schemas.product import SanPhamCreate, SanPhamResponse, DanhMucResponse
@@ -136,14 +139,12 @@ async def add_product_specs(ID_sanpham: int):
 
 
 # Product Images (AnhSP)
-from app.models.product import AnhSP
-from pydantic import BaseModel
-
-class ProductImageCreate(BaseModel):
-    HinhAnh_url: str
-
 @router.post("/{ID_sanpham}/images", tags=["Products"])
-async def add_product_image(ID_sanpham: int, image_in: ProductImageCreate, db: Session = Depends(get_db)):
+async def add_product_image(
+    ID_sanpham: int, 
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db)
+):
     """
     Add image for product (AnhSP) - admin only
     """
@@ -152,7 +153,21 @@ async def add_product_image(ID_sanpham: int, image_in: ProductImageCreate, db: S
     if not product:
         raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
         
-    db_image = AnhSP(ID_sanpham=ID_sanpham, HinhAnh_url=image_in.HinhAnh_url)
+    # Save file
+    upload_dir = "uploads"
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+        
+    file_extension = os.path.splitext(file.filename)[1]
+    file_name = f"{uuid.uuid4()}{file_extension}"
+    file_path = os.path.join(upload_dir, file_name)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Create image record
+    image_url = f"/uploads/{file_name}"
+    db_image = AnhSP(ID_sanpham=ID_sanpham, HinhAnh_url=image_url)
     db.add(db_image)
     db.commit()
     db.refresh(db_image)

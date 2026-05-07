@@ -42,13 +42,11 @@ export default function ProductModal({ isOpen, onClose, onRefresh }) {
         gia: parseFloat(formData.gia)
       })
 
-      // 2. Upload Images (Simulated for now since backend doesn't have real upload yet)
-      // In a real app, we would use FormData to upload files to a storage service
-      // and then save the URLs to the database.
-      for (const img of images) {
-        // Simulated URL
-        const simulatedUrl = `https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop`
-        await productService.addProductImage(product.ID_sanpham, simulatedUrl)
+      // 2. Upload Images
+      if (images.length > 0) {
+        for (const imgFile of images) {
+          await productService.addProductImage(product.ID_sanpham, imgFile)
+        }
       }
 
       alert('Thêm sản phẩm thành công!')

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ShoppingCart, Eye, Trash2 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import * as productService from '../../services/productService'
+import { getImageUrl } from '../../utils/url'
 import '../../styles/ProductCard.css'
 
 export default function ProductCard({ product, onDelete }) {
@@ -10,7 +11,7 @@ export default function ProductCard({ product, onDelete }) {
   const name = product.tenSP || product.name
   const price = product.gia || product.price
   const id = product.ID_sanpham || product.id
-  const imageUrl = product.HinhAnh_url || product.image_url
+  const imageUrl = getImageUrl(product.HinhAnh_url || product.image_url)
 
   const formatPrice = (p) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)

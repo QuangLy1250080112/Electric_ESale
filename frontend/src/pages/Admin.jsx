@@ -72,11 +72,10 @@ export default function Admin() {
         throw new Error('Không nhận được phản hồi hợp lệ từ máy chủ.')
       }
 
-      // 2. Upload Images (Simulated for now, but with correct ID)
+      // 2. Upload Images
       if (images.length > 0) {
-        for (const img of images) {
-          const simulatedUrl = `https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop`
-          await productService.addProductImage(product.ID_sanpham, simulatedUrl)
+        for (const imgFile of images) {
+          await productService.addProductImage(product.ID_sanpham, imgFile)
         }
       }
 

@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { Trash2 } from 'lucide-react'
 import * as productService from '../../services/productService'
 import { useNavigate } from 'react-router-dom'
+import { getImageUrl } from '../../utils/url'
 import '../../styles/ProductDetails.css'
 
 export default function ProductDetails({ product }) {
@@ -15,7 +16,7 @@ export default function ProductDetails({ product }) {
   const name = product.tenSP || product.name
   const price = product.gia || product.price
   const description = product.mota || product.description
-  const imageUrl = product.HinhAnh_url || product.image_url
+  const imageUrl = getImageUrl(product.HinhAnh_url || product.image_url)
   const id = product.ID_sanpham || product.id
 
   const formatPrice = (p) => {
