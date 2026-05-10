@@ -22,6 +22,7 @@ class DanhMuc(Base):
     ID_danhmuc = Column(Integer, primary_key=True, index=True)
     tenDanhMuc = Column(String, unique=True, index=True)
     mota = Column(Text)
+    anh_url = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

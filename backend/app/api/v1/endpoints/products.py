@@ -7,15 +7,58 @@ Products endpoints (SanPham)
 
 from fastapi import APIRouter, Query, HTTPException, Depends, status, File, UploadFile
 from sqlalchemy.orm import Session
+from sqlalchemy import func as sqlfunc, desc
 from typing import Optional, List
 import os
 import shutil
 import uuid
 from app.core.database import get_db
 from app.models.product import SanPham, DanhMuc, NhaCungCap, AnhSP
+from app.models.order import Donhang
 from app.schemas.product import SanPhamCreate, SanPhamResponse, DanhMucResponse
 
 router = APIRouter()
+
+
+@router.get("/newest", response_model=List[SanPhamResponse], tags=["Products"])
+async def get_newest_products(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    """
+    Get newest products sorted by created_at descending
+    """
+    products = db.query(SanPham).order_by(desc(SanPham.created_at)).limit(limit).all()
+    return products
+
+
+@router.get("/hottest", response_model=List[SanPhamResponse], tags=["Products"])
+async def get_hottest_products(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    """
+    Get best-selling products by summing order quantities from Donhang
+    Falls back to newest if no orders exist
+    """
+    # Subquery: sum soluong per product from orders
+    sold_subq = (
+        db.query(
+            Donhang.ID_sanpham,
+            sqlfunc.coalesce(sqlfunc.sum(Donhang.soluong), 0).label("total_sold")
+        )
+        .group_by(Donhang.ID_sanpham)
+        .subquery()
+    )
+
+    products = (
+        db.query(SanPham)
+        .outerjoin(sold_subq, SanPham.ID_sanpham == sold_subq.c.ID_sanpham)
+        .order_by(desc(sqlfunc.coalesce(sold_subq.c.total_sold, 0)), desc(SanPham.created_at))
+        .limit(limit)
+        .all()
+    )
+    return products
 
 
 @router.get("", response_model=List[SanPhamResponse], tags=["Products"])

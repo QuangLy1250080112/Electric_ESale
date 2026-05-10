@@ -33,6 +33,7 @@ class SanPhamResponse(SanPhamBase):
 class DanhMucBase(BaseModel):
     tenDanhMuc: str
     mota: Optional[str] = None
+    anh_url: Optional[str] = None
 
 class DanhMucResponse(DanhMucBase):
     ID_danhmuc: int

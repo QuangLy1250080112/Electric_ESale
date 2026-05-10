@@ -32,14 +32,39 @@
 - [x] **Implemented automatic image file deletion from filesystem when a product is deleted**
 - [x] **Consolidated image storage to `frontend/public/images/products` and removed redundant `backend/uploads` folder**
 - [x] **Cleaned up code and utilities to remove all references to legacy `/uploads` path**
+- [x] **Merged Products page into Home page — removed standalone Products page**
+- [x] **Removed "Sản phẩm" link from Header navigation**
+- [x] **Enhanced Home page with: Hero section, About section, Why Choose Us, Owner Introduction**
+- [x] **Added product tabs: Newest (by created_at), Hottest (by order count), All**
+- [x] **Added pagination (6 products per page, prev/next buttons)**
+- [x] **Added "Đến trang danh mục" CTA button on Home page**
+- [x] **Created Categories page with category boxes (image + mota display)**
+- [x] **Added category image upload (admin-only, stored in DB `danhmuc.anh_url`)**
+- [x] **Created CategoryProducts page — shows all products in a category with image/name/price cards**
+- [x] **Added backend endpoints: `/products/newest`, `/products/hottest`, `/categories/{id}/products`, `/categories/{id}/image`**
+- [x] **Added `anh_url` column to `danhmuc` table for category images**
+- [x] **Updated App.jsx routes: `/products` redirects to `/`, added `/categories` and `/categories/:id`**
 
 ## Technical Details
 
 - **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT)
 - **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React
 - **Database**: PostgreSQL (Active)
-- **Image Storage**: `frontend/public/images/products` (Shared via Git)
+- **Image Storage**: 
+  - Products: `frontend/public/images/products`
+  - Categories: `frontend/public/images/categories`
 - **API Base URL**: `http://localhost:8000/api/v1`
+
+## Architecture Notes
+
+- **Home page** now contains all product browsing features (search, newest/hottest tabs, pagination)
+- **Products page** is deprecated — `/products` route redirects to Home (`/`)
+- **Product detail** route (`/products/:id`) still works for deep linking
+- **Categories page** (`/categories`) shows category boxes with images and descriptions
+- **CategoryProducts page** (`/categories/:id`) shows all products in a specific category
+- **Backend sorting**: 
+  - Newest: `ORDER BY created_at DESC`
+  - Hottest: `LEFT JOIN donhang`, `ORDER BY SUM(soluong) DESC`
 
 ## Environment Setup
 

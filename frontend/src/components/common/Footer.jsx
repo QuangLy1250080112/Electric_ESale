@@ -17,7 +17,7 @@ export default function Footer() {
           <h3>Khám phá</h3>
           <ul className="footer-links">
             <li><a href="/">Trang chủ</a></li>
-            <li><a href="/products">Sản phẩm</a></li>
+            <li><a href="/#products">Sản phẩm</a></li>
             <li><a href="/categories">Danh mục</a></li>
             <li><a href="/about">Giới thiệu</a></li>
           </ul>

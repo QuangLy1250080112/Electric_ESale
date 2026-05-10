@@ -48,10 +48,6 @@ export default function Header() {
             <Home size={18} />
             <span>Trang chủ</span>
           </Link>
-          <Link to="/products" className={`nav-link ${isActive('/products') ? 'active' : ''}`}>
-            <Package size={18} />
-            <span>Sản phẩm</span>
-          </Link>
           <Link to="/categories" className={`nav-link ${isActive('/categories') ? 'active' : ''}`}>
             <Layers size={18} />
             <span>Danh mục</span>

@@ -1,29 +1,29 @@
-import { useState, useEffect } from 'react'
-import * as orderService from '../services/orderService'
-import Loader from '../components/common/Loader'
+import { useState, useEffect } from "react";
+import * as orderService from "../services/orderService";
+import Loader from "../components/common/Loader";
 
 export default function OrderHistory() {
-  const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const data = await orderService.getOrders()
-        setOrders(data)
+        const data = await orderService.getOrders();
+        setOrders(data);
       } catch (err) {
-        setError(err.message)
+        setError(err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchOrders()
-  }, [])
+    fetchOrders();
+  }, []);
 
-  if (loading) return <Loader />
-  if (error) return <div className="error">Error: {error}</div>
+  if (loading) return <Loader />;
+  if (error) return <div className="error">Error: {error}</div>;
 
   return (
     <div className="order-history-page">
@@ -43,5 +43,5 @@ export default function OrderHistory() {
         </div>
       )}
     </div>
-  )
+  );
 }

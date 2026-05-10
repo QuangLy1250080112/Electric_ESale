@@ -5,8 +5,9 @@ import { useAuthStore } from './store/authStore'
 
 // Pages
 import Home from './pages/Home'
-import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
+import Categories from './pages/Categories'
+import CategoryProducts from './pages/CategoryProducts'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderHistory from './pages/OrderHistory'
@@ -31,8 +32,11 @@ function App() {
         {/* Main Routes */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
-          <Route path="products" element={<Products />} />
+          {/* Redirect old /products to home */}
+          <Route path="products" element={<Navigate to="/" replace />} />
           <Route path="products/:id" element={<ProductDetail />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="categories/:id" element={<CategoryProducts />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="orders" element={<OrderHistory />} />

@@ -6,6 +6,18 @@ export const getProducts = async (params = {}) => {
   return response.data
 }
 
+// Get newest products
+export const getNewestProducts = async (limit = 10) => {
+  const response = await api.get('/v1/products/newest', { params: { limit } })
+  return response.data
+}
+
+// Get hottest/best-selling products
+export const getHottestProducts = async (limit = 10) => {
+  const response = await api.get('/v1/products/hottest', { params: { limit } })
+  return response.data
+}
+
 // Get single product
 export const getProduct = async (id) => {
   const response = await api.get(`/v1/products/${id}`)
@@ -29,6 +41,22 @@ export const getCategories = async () => {
 // Get category details
 export const getCategory = async (id) => {
   const response = await api.get(`/v1/categories/${id}`)
+  return response.data
+}
+
+// Get products by category
+export const getCategoryProducts = async (id) => {
+  const response = await api.get(`/v1/categories/${id}/products`)
+  return response.data
+}
+
+// Upload category image
+export const uploadCategoryImage = async (categoryId, file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post(`/v1/categories/${categoryId}/image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
   return response.data
 }
 
