@@ -93,12 +93,22 @@ async def upload_category_image(
     return {"anh_url": image_url, "message": "Tải ảnh danh mục thành công"}
 
 
-@router.post("", tags=["Categories"])
-async def create_category(db: Session = Depends(get_db)):
+from pydantic import BaseModel
+class DanhMucCreate(BaseModel):
+    tenDanhMuc: str
+    mota: str = None
+    anh_url: str = None
+
+@router.post("", response_model=DanhMucResponse, tags=["Categories"])
+async def create_category(category_in: DanhMucCreate, db: Session = Depends(get_db)):
     """
     Create new category (DanhMuc) - admin only
     """
-    return {"message": "Create category - to be implemented"}
+    db_category = DanhMuc(**category_in.dict())
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    return db_category
 
 
 @router.put("/{ID_danhmuc}", tags=["Categories"])

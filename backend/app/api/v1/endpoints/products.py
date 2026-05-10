@@ -15,7 +15,7 @@ import uuid
 from app.core.database import get_db
 from app.models.product import SanPham, DanhMuc, NhaCungCap, AnhSP
 from app.models.order import Donhang
-from app.schemas.product import SanPhamCreate, SanPhamResponse, DanhMucResponse
+from app.schemas.product import SanPhamCreate, SanPhamUpdate, SanPhamResponse, DanhMucResponse
 
 router = APIRouter()
 
@@ -64,21 +64,36 @@ async def get_hottest_products(
 @router.get("", response_model=List[SanPhamResponse], tags=["Products"])
 async def get_products(
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(100, ge=1),
     ID_danhmuc: Optional[int] = None,
     search: Optional[str] = None,
+    supplier_name: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """
-    Get all products (SanPham) with pagination and filtering
+    Get all products (SanPham) with pagination and advanced filtering
     """
     query = db.query(SanPham)
     if ID_danhmuc:
         query = query.filter(SanPham.ID_danhmuc == ID_danhmuc)
     if search:
         query = query.filter(SanPham.tenSP.ilike(f"%{search}%"))
+    if supplier_name:
+        query = query.join(NhaCungCap, SanPham.supplier_ID == NhaCungCap.ID_NhaCungCap).filter(NhaCungCap.tenNhaCungCap.ilike(f"%{supplier_name}%"))
+    if min_price is not None:
+        query = query.filter(SanPham.gia >= min_price)
+    if max_price is not None:
+        query = query.filter(SanPham.gia <= max_price)
+    if date_from:
+        query = query.filter(SanPham.created_at >= date_from)
+    if date_to:
+        query = query.filter(SanPham.created_at <= date_to)
     
-    products = query.offset(skip).limit(limit).all()
+    products = query.order_by(desc(SanPham.created_at)).offset(skip).limit(limit).all()
     return products
 
 
@@ -125,15 +140,15 @@ async def create_product(product_in: SanPhamCreate, db: Session = Depends(get_db
 
 
 @router.put("/{ID_sanpham}", response_model=SanPhamResponse, tags=["Products"])
-async def update_product(ID_sanpham: int, product_in: SanPhamCreate, db: Session = Depends(get_db)):
+async def update_product(ID_sanpham: int, product_in: SanPhamUpdate, db: Session = Depends(get_db)):
     """
-    Update product (SanPham)
+    Update product (SanPham) - partial updates supported
     """
     db_product = db.query(SanPham).filter(SanPham.ID_sanpham == ID_sanpham).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
     
-    for field, value in product_in.dict().items():
+    for field, value in product_in.dict(exclude_unset=True).items():
         setattr(db_product, field, value)
     
     db.commit()
@@ -256,11 +271,44 @@ async def add_product_image(
 
 
 @router.get("/{ID_sanpham}/images", tags=["Products"])
-async def get_product_images(ID_sanpham: int):
+async def get_product_images(ID_sanpham: int, db: Session = Depends(get_db)):
     """
     Get all images for product (AnhSP)
     """
-    return {"message": f"Get images for product {ID_sanpham} - to be implemented"}
+    images = db.query(AnhSP).filter(AnhSP.ID_sanpham == ID_sanpham).all()
+    return images
+
+@router.delete("/images/{ID_HinhAnh}", tags=["Products"])
+async def delete_product_image(ID_HinhAnh: int, db: Session = Depends(get_db)):
+    """
+    Delete a specific product image
+    """
+    image = db.query(AnhSP).filter(AnhSP.ID_HinhAnh == ID_HinhAnh).first()
+    if not image:
+        raise HTTPException(status_code=404, detail="Không tìm thấy hình ảnh")
+        
+    # Check if this is the primary image for any product
+    product = db.query(SanPham).filter(SanPham.ID_HinhAnh == ID_HinhAnh).first()
+    if product:
+        # Find another image to be the primary, or set to null
+        other_img = db.query(AnhSP).filter(AnhSP.ID_sanpham == product.ID_sanpham, AnhSP.ID_HinhAnh != ID_HinhAnh).first()
+        product.ID_HinhAnh = other_img.ID_HinhAnh if other_img else None
+        db.commit()
+
+    # Try to delete the file
+    if image.HinhAnh_url:
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
+        relative_path = image.HinhAnh_url.lstrip("/")
+        full_path = os.path.join(base_dir, "frontend", "public", relative_path)
+        if os.path.exists(full_path):
+            try:
+                os.remove(full_path)
+            except Exception as e:
+                pass
+
+    db.delete(image)
+    db.commit()
+    return {"message": "Đã xóa hình ảnh thành công"}
 
 
 # Inventory (TonKho)

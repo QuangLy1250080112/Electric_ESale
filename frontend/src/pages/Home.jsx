@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import * as productService from '../services/productService'
-import ProductCard from '../components/products/ProductCard'
-import ProductModal from '../components/products/ProductModal'
+import ProductCard from './products/ProductCard'
+import ProductModal from './products/ProductModal'
 import Loader from '../components/common/Loader'
 import { getImageUrl } from '../utils/url'
 import {
@@ -144,29 +144,13 @@ export default function Home() {
         <div className="hero-content">
           <div className="hero-badge">
             <Sparkles size={14} />
-            <span>Hệ thống ESale trực tuyến #1 Việt Nam</span>
+            <span>Hệ thống ESale trực tuyến</span>
           </div>
           <h1>Nâng tầm <span className="gradient-text">Công nghệ</span>,<br />Vươn xa Trải nghiệm</h1>
           <p className="hero-desc">
             Khám phá bộ sưu tập thiết bị điện tử hàng đầu với công nghệ tiên tiến nhất.
             Cam kết chính hãng, giá tốt nhất thị trường.
           </p>
-
-          <form onSubmit={handleSearch} className="hero-search">
-            <div className="hero-search-input">
-              <Search size={20} className="search-icon-hero" />
-              <input
-                type="text"
-                placeholder="Bạn đang tìm kiếm sản phẩm nào?"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary btn-search">
-              <Search size={18} />
-              <span>Tìm kiếm</span>
-            </button>
-          </form>
 
           <div className="hero-stats">
             <div className="stat-item">
@@ -266,11 +250,11 @@ export default function Home() {
           </div>
           <div className="owner-info">
             <span className="section-tag">Về chủ cửa hàng</span>
-            <h3>Lý Hồng Quang</h3>
-            <p className="owner-title">Nhà sáng lập & Giám đốc điều hành ESale</p>
+            <h3>Nhóm quản lí ESale</h3>
+            <p className="owner-title">Nhóm sáng lập & Giám đốc điều hành ESale</p>
             <p className="owner-bio">
               Với hơn 5 năm kinh nghiệm trong lĩnh vực thương mại điện tử và đam mê với công nghệ,
-              tôi sáng lập ESale với sứ mệnh mang đến cho khách hàng Việt Nam những sản phẩm điện tử
+              chúng tôi sáng lập ESale với sứ mệnh mang đến cho khách hàng Việt Nam những sản phẩm điện tử
               chất lượng nhất với giá cả phải chăng nhất. Mỗi sản phẩm tại ESale đều được tôi đích
               thân kiểm tra và tuyển chọn kỹ lưỡng.
             </p>

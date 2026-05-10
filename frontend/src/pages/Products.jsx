@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useProducts } from '../hooks/useProducts'
 import { useAuthStore } from '../store/authStore'
-import ProductList from '../components/products/ProductList'
-import ProductModal from '../components/products/ProductModal'
+import ProductList from './products/ProductList'
+import ProductModal from './products/ProductModal'
 import { Search, Plus, Filter } from 'lucide-react'
 
 export default function Products() {

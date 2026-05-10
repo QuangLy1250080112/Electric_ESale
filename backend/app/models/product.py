@@ -60,6 +60,7 @@ class SanPham(Base):
     tenSP = Column(String, unique=True, index=True)
     mota = Column(Text)
     gia = Column(Float)
+    soluong = Column(Integer, default=0)
     ID_danhmuc = Column(Integer, ForeignKey("danhmuc.ID_danhmuc"))
     supplier_ID = Column(Integer, ForeignKey("nhacungcap.ID_NhaCungCap"))
     ID_HinhAnh = Column(Integer, ForeignKey("anhsp.ID_HinhAnh"), nullable=True)

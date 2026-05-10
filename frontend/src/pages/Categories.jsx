@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import * as productService from '../services/productService'
 import { getImageUrl } from '../utils/url'
 import Loader from '../components/common/Loader'
-import { Layers, Upload, Image, ArrowRight } from 'lucide-react'
+import { Layers, Upload, Image, ArrowRight, Plus, X } from 'lucide-react'
 import '../styles/Categories.css'
 
 export default function Categories() {
@@ -14,6 +14,11 @@ export default function Categories() {
   const [uploadingId, setUploadingId] = useState(null)
   const { user } = useAuth()
   const navigate = useNavigate()
+
+  // Add Category State
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newCat, setNewCat] = useState({ tenDanhMuc: '', mota: '' })
+  const [newCatImage, setNewCatImage] = useState(null)
 
   useEffect(() => {
     fetchCategories()
@@ -54,6 +59,23 @@ export default function Categories() {
     input.click()
   }
 
+  const handleAddCategory = async (e) => {
+    e.preventDefault()
+    try {
+      const created = await productService.createCategory({ tenDanhMuc: newCat.tenDanhMuc, mota: newCat.mota })
+      if (newCatImage) {
+        await productService.uploadCategoryImage(created.ID_danhmuc, newCatImage)
+      }
+      setShowAddModal(false)
+      setNewCat({ tenDanhMuc: '', mota: '' })
+      setNewCatImage(null)
+      fetchCategories()
+      alert('Đã thêm danh mục thành công!')
+    } catch (err) {
+      alert('Lỗi khi thêm danh mục: ' + err.message)
+    }
+  }
+
   if (loading) return (
     <div className="categories-loading">
       <Loader />
@@ -69,12 +91,19 @@ export default function Categories() {
 
   return (
     <div className="categories-page">
-      <div className="categories-header">
-        <div className="categories-header-icon">
-          <Layers size={32} />
+      <div className="categories-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+        <div>
+          <div className="categories-header-icon" style={{margin: 0, marginBottom: '1rem'}}>
+            <Layers size={32} />
+          </div>
+          <h1 style={{margin: 0}}>Danh mục sản phẩm</h1>
+          <p>Khám phá sản phẩm theo từng danh mục chuyên biệt</p>
         </div>
-        <h1>Danh mục sản phẩm</h1>
-        <p>Khám phá sản phẩm theo từng danh mục chuyên biệt</p>
+        {user?.is_admin && (
+          <button className="btn btn-primary" onClick={() => setShowAddModal(true)} style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+            <Plus size={20} /> Thêm danh mục
+          </button>
+        )}
       </div>
 
       <div className="categories-grid">
@@ -127,6 +156,32 @@ export default function Categories() {
         <div className="categories-empty">
           <Layers size={64} className="empty-icon" />
           <p>Chưa có danh mục nào được tạo.</p>
+        </div>
+      )}
+
+      {showAddModal && (
+        <div className="modal-overlay" style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+          <div className="modal-content" style={{background: 'white', padding: '2rem', borderRadius: '12px', width: '100%', maxWidth: '500px'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem'}}>
+              <h3>Thêm danh mục mới</h3>
+              <button onClick={() => setShowAddModal(false)} style={{background: 'none', border: 'none', cursor: 'pointer'}}><X /></button>
+            </div>
+            <form onSubmit={handleAddCategory} style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+              <div>
+                <label>Tên danh mục</label>
+                <input className="form-control" value={newCat.tenDanhMuc} onChange={e=>setNewCat({...newCat, tenDanhMuc: e.target.value})} required />
+              </div>
+              <div>
+                <label>Mô tả</label>
+                <textarea className="form-control" value={newCat.mota} onChange={e=>setNewCat({...newCat, mota: e.target.value})} />
+              </div>
+              <div>
+                <label>Ảnh đại diện (tùy chọn)</label>
+                <input type="file" className="form-control" onChange={e=>setNewCatImage(e.target.files[0])} accept="image/*" />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{marginTop: '1rem'}}>Tạo danh mục</button>
+            </form>
+          </div>
         </div>
       )}
     </div>
