@@ -11,6 +11,18 @@ class TaiKhoanBase(BaseModel):
 class TaiKhoanCreate(TaiKhoanBase):
     matkhau: str
 
+class TaiKhoanRegister(BaseModel):
+    token: str
+    tenTK: str
+    matkhau: str
+
+class EmailRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 class TaiKhoanUpdate(BaseModel):
     email: Optional[EmailStr] = None
     matkhau: Optional[str] = None

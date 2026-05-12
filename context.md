@@ -44,10 +44,15 @@
   - **OrderHistory page**: Shows purchased products with "Đánh giá của bạn" column. Displays star rating if reviewed, or "Bạn chưa đánh giá" link navigating to `/products/{id}#reviews`.
   - **ProductDetails page**: Displays reviews section below product box (date above username, stars, comment, multi-image with lightbox). Shows inline review form for eligible users (purchased + not yet reviewed) with star rating, comment textarea, and multi-image upload.
   - **Review images** stored in `frontend/public/images/reviews/`.
+- [x] **Authentication Flow Enhancements:**
+  - **Mailtrap Integration**: Set up email sending via `smtplib` for account verification and password reset.
+  - **Registration Redesign**: Modernized `Register.jsx` to match `Login.jsx` aesthetic. Implemented a 2-step process: Request email verification -> Receive JWT link -> Complete registration.
+  - **Forgot Password**: Added "Quên mật khẩu" flow to `Login.jsx` (enter email -> receive link -> reset password).
+  - **Backend Support**: Added new endpoints (`/auth/request-register`, `/auth/forgot-password`, `/auth/reset-password`) using JWT tokens with `type` claims to verify email links securely.
 
 ## Technical Details
 
-- **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT)
+- **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT), smtplib
 - **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React
 - **Database**: PostgreSQL (Active)
 - **Image Storage**: `frontend/public/images/products`, `frontend/public/images/categories`, `frontend/public/images/reviews`
