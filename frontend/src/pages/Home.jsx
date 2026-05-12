@@ -303,7 +303,7 @@ export default function Home() {
           </div>
           <div className="owner-info">
             <span className="section-tag">Về chủ cửa hàng</span>
-            <h3>Nhóm quản lí ESale</h3>
+            <h3>Nhóm quản lý ESale</h3>
             <p className="owner-title">
               Nhóm sáng lập & Giám đốc điều hành ESale
             </p>

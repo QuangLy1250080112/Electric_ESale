@@ -58,7 +58,8 @@ export default function Cart() {
       setShowCheckoutModal(false);
       alert("Thanh toán thành công! Đơn hàng đã được xác nhận.");
     } catch (error) {
-      const msg = error.response?.data?.detail || "Có lỗi xảy ra khi thanh toán!";
+      const msg =
+        error.response?.data?.detail || "Có lỗi xảy ra khi thanh toán!";
       alert(msg);
     } finally {
       setCheckoutLoading(false);
@@ -67,7 +68,12 @@ export default function Cart() {
 
   // Build QR data with user and cart info
   const qrData = JSON.stringify({
-    items: items.map((i) => ({ id: i.id, name: i.name, qty: i.quantity, price: i.price })),
+    items: items.map((i) => ({
+      id: i.id,
+      name: i.name,
+      qty: i.quantity,
+      price: i.price,
+    })),
     total,
     user: user?.tenTK || "guest",
   });
@@ -135,22 +141,50 @@ export default function Cart() {
                   <td>{item.name}</td>
                   <td>{formatPrice(item.price)}</td>
                   <td onClick={(e) => e.stopPropagation()}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
                       <button
                         className="btn-icon"
-                        onClick={() => handleQuantityChange(item, item.quantity - 1)}
+                        onClick={() =>
+                          handleQuantityChange(item, item.quantity - 1)
+                        }
                         disabled={item.quantity <= 1}
-                        style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "white" }}
+                        style={{
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          padding: "2px 6px",
+                          cursor: "pointer",
+                          background: "white",
+                        }}
                       >
                         <Minus size={14} />
                       </button>
-                      <span style={{ minWidth: "30px", textAlign: "center", fontWeight: "600" }}>
+                      <span
+                        style={{
+                          minWidth: "30px",
+                          textAlign: "center",
+                          fontWeight: "600",
+                        }}
+                      >
                         {item.quantity}
                       </span>
                       <button
                         className="btn-icon"
-                        onClick={() => handleQuantityChange(item, item.quantity + 1)}
-                        style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "white" }}
+                        onClick={() =>
+                          handleQuantityChange(item, item.quantity + 1)
+                        }
+                        style={{
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          padding: "2px 6px",
+                          cursor: "pointer",
+                          background: "white",
+                        }}
                       >
                         <Plus size={14} />
                       </button>
@@ -200,44 +234,93 @@ export default function Cart() {
       </div>
 
       {showCheckoutModal && (
-        <div className="modal-overlay" onClick={() => setShowCheckoutModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{
-            padding: "2rem", textAlign: "center", maxWidth: "480px", width: "90%"
-          }}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowCheckoutModal(false)}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              padding: "2rem",
+              textAlign: "center",
+              maxWidth: "480px",
+              width: "90%",
+            }}
+          >
             <h2 style={{ marginBottom: "0.5rem" }}>Xác nhận thanh toán</h2>
-            <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+            <p
+              style={{
+                color: "#666",
+                marginBottom: "1.5rem",
+                fontSize: "0.9rem",
+              }}
+            >
               Quét mã QR bằng điện thoại hoặc nhấn "Xác nhận" để hoàn tất.
             </p>
 
-            <div style={{ background: "#f5f5f5", padding: "1rem", borderRadius: "12px", display: "inline-block", marginBottom: "1rem" }}>
-              <img src={qrCodeUrl} alt="Payment QR Code" style={{ borderRadius: "8px" }} />
+            <div
+              style={{
+                background: "#f5f5f5",
+                padding: "1rem",
+                borderRadius: "12px",
+                display: "inline-block",
+                marginBottom: "1rem",
+              }}
+            >
+              <img
+                src={qrCodeUrl}
+                alt="Payment QR Code"
+                style={{ borderRadius: "8px" }}
+              />
             </div>
 
             <div style={{ marginBottom: "1.5rem" }}>
               <div style={{ borderTop: "1px solid #eee", padding: "1rem 0" }}>
-                {items.map(item => (
-                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
-                    <span>{item.name} × {item.quantity}</span>
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    <span>
+                      {item.name} × {item.quantity}
+                    </span>
                     <strong>{formatPrice(item.price * item.quantity)}</strong>
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.15rem", fontWeight: "bold", borderTop: "1px solid #eee", paddingTop: "0.75rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "1.15rem",
+                  fontWeight: "bold",
+                  borderTop: "1px solid #eee",
+                  paddingTop: "0.75rem",
+                }}
+              >
                 <span>Tổng cộng:</span>
-                <span style={{ color: "var(--primary)" }}>{formatPrice(total)}</span>
+                <span style={{ color: "var(--primary)" }}>
+                  {formatPrice(total)}
+                </span>
               </div>
             </div>
 
-            <button 
+            <button
               className="btn btn-primary btn-lg"
               style={{ width: "100%", marginBottom: "0.5rem" }}
               onClick={handleConfirmCheckout}
               disabled={checkoutLoading}
             >
-              {checkoutLoading ? "Đang xử lý..." : "✓ Xác nhận thanh toán"}
+              {checkoutLoading ? "Đang xử lý..." : "Xác nhận thanh toán"}
             </button>
-            <button 
-              className="btn btn-secondary" 
+            <button
+              className="btn btn-secondary"
               style={{ width: "100%" }}
               onClick={() => setShowCheckoutModal(false)}
             >

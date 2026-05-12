@@ -17,12 +17,20 @@ import Register from './pages/Register'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
+import Forbidden from './pages/Forbidden'
+
 // Protected Route component
 const AdminRoute = ({ children }) => {
   const { user, isLoggedIn } = useAuthStore()
-  if (!isLoggedIn || !user?.is_admin) {
+  
+  if (!isLoggedIn) {
     return <Navigate to="/login" />
   }
+  
+  if (!user?.is_admin) {
+    return <Forbidden />
+  }
+  
   return children
 }
 

@@ -71,14 +71,14 @@ export default function Admin() {
             onClick={() => setActiveTab("suppliers")}
           >
             <List size={20} />
-            <span>Quản lí nhà cung cấp</span>
+            <span>Quản lý nhà cung cấp</span>
           </button>
           <button
             className={`sidebar-link ${activeTab === "accounts" ? "active" : ""}`}
             onClick={() => setActiveTab("accounts")}
           >
             <Users size={20} />
-            <span>Quản lí tài khoản</span>
+            <span>Quản lý tài khoản</span>
           </button>
           <button
             className={`sidebar-link ${activeTab === "orders" ? "active" : ""}`}
@@ -588,7 +588,7 @@ function ManageSuppliersTab({ categories }) {
   return (
     <div className="admin-card card animate-fade-in">
       <div className="admin-toolbar">
-        <h3>Quản lí nhà cung cấp</h3>
+        <h3>Quản lý nhà cung cấp</h3>
       </div>
       <form
         onSubmit={handleSubmit}
@@ -713,7 +713,7 @@ function ManageAccountsTab() {
   return (
     <div className="admin-card card animate-fade-in">
       <div className="admin-toolbar">
-        <h3>Quản lí tài khoản</h3>
+        <h3>Quản lý tài khoản</h3>
       </div>
       <form
         onSubmit={handleSubmit}

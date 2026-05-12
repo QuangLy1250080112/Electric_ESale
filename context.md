@@ -21,8 +21,8 @@
 - [x] **Redesigned Admin Dashboard (`Admin.jsx`) to include 4 functional tabs:**
   - **Thêm sản phẩm**: Added `soluong` field and Autocomplete/Search dropdown for Supplier (`Nhà cung cấp`).
   - **Quản lý sản phẩm**: Display products in a table format with Search/Filter. Click row to view details, click Edit to update info (name, price, quantity) via Modal, or Delete.
-  - **Quản lí nhà cung cấp**: Replaced old "Danh mục" tab. Allows viewing and adding suppliers to the `nhacungcap` table.
-  - **Quản lí tài khoản**: Replaced old "Người dùng" tab. Allows viewing, creating (with Admin role toggle), and deleting user accounts in the `taikhoan` table.
+  - **Quản lý nhà cung cấp**: Replaced old "Danh mục" tab. Allows viewing and adding suppliers to the `nhacungcap` table.
+  - **Quản lý tài khoản**: Replaced old "Người dùng" tab. Allows viewing, creating (with Admin role toggle), and deleting user accounts in the `taikhoan` table.
 - [x] **Added new Backend CRUD endpoints:** `/suppliers`, `/accounts` for admin management.
 - [x] **Updated API routes and Product schemas** to support partial updates (`SanPhamUpdate` with `exclude_unset=True`).
 - [x] **Advanced Cart Logic & Product Editing:**
