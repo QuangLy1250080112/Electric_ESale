@@ -1,0 +1,95 @@
+/* ===== ORDER HISTORY PAGE ===== */
+
+.order-history-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.order-history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.order-history-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text-main, #1e293b);
+}
+
+.order-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.order-empty-state p {
+  font-size: 1.1rem;
+}
+
+.order-history-card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.order-product-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.order-product-link {
+  color: var(--primary, #2563eb);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.order-product-link:hover {
+  color: var(--primary-dark, #1d4ed8);
+  text-decoration: underline;
+}
+
+.order-date-cell {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.order-review-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.order-no-review-link {
+  color: var(--primary, #2563eb);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s, opacity 0.2s;
+}
+
+.order-no-review-link:hover {
+  color: var(--primary-dark, #1d4ed8);
+  opacity: 0.85;
+}
+
+@media (max-width: 768px) {
+  .order-history-page {
+    padding: 1rem;
+  }
+  
+  .order-history-header h1 {
+    font-size: 1.3rem;
+  }
+}

@@ -34,13 +34,23 @@
   - Redesigned `Cart.jsx` as a detailed table view.
   - Added `email` to Supplier and Account admin forms, added role select (User, Staff, Admin) to Account creation.
   - Added "Thêm danh mục" form to Categories page.
+- [x] **Product Reviews System (Full Implementation):**
+  - **Database**: `reviews` table with columns: `ID_review`, `uID`, `ID_sanpham`, `rating`, `comment`, `image_url` (comma-separated for multiple images), `thoigiantao`, `updated_at`.
+  - **Backend**: Review CRUD endpoints under `/orders/reviews/*`, including:
+    - `GET /reviews/{ID_sanpham}` — public, list product reviews
+    - `GET /reviews/can-review/{ID_sanpham}` — auth, check review eligibility
+    - `POST /reviews` — auth, create review with multi-image upload
+    - `DELETE /reviews/{ID_review}` — auth, owner/admin delete
+  - **OrderHistory page**: Shows purchased products with "Đánh giá của bạn" column. Displays star rating if reviewed, or "Bạn chưa đánh giá" link navigating to `/products/{id}#reviews`.
+  - **ProductDetails page**: Displays reviews section below product box (date above username, stars, comment, multi-image with lightbox). Shows inline review form for eligible users (purchased + not yet reviewed) with star rating, comment textarea, and multi-image upload.
+  - **Review images** stored in `frontend/public/images/reviews/`.
 
 ## Technical Details
 
 - **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT)
 - **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React
 - **Database**: PostgreSQL (Active)
-- **Image Storage**: `frontend/public/images/products` and `frontend/public/images/categories`
+- **Image Storage**: `frontend/public/images/products`, `frontend/public/images/categories`, `frontend/public/images/reviews`
 - **API Base URL**: `http://localhost:8000/api/v1`
 
 ## Architecture Notes
@@ -49,6 +59,8 @@
 - **Supplier Autocomplete** implemented using a custom dropdown synced with text input filter.
 - **Database Migrations** run directly via SQL scripts (e.g., adding columns) due to lack of Alembic in current setup.
 - **Partial updates** on PUT endpoints use `.dict(exclude_unset=True)` to avoid overwriting fields with nulls.
+- **SanPham.HinhAnh_url** is a Python `@property`, not a database column — cannot be used in SQL query projections. Always load via ORM object.
+- **Review eligibility** checked server-side: user must have a completed order for the product and no existing review.
 
 ## Guidelines
 

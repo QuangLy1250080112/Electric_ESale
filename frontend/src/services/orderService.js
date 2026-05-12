@@ -34,6 +34,12 @@ export const cancelOrder = async (id) => {
 
 // ===== REVIEWS =====
 
+// Check if current user can review a product
+export const checkCanReview = async (productId) => {
+  const response = await api.get(`/v1/orders/reviews/can-review/${productId}`);
+  return response.data;
+};
+
 // Get reviews for a product
 export const getProductReviews = async (productId) => {
   const response = await api.get(`/v1/orders/reviews/${productId}`);

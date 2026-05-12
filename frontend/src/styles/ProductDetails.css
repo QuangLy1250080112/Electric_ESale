@@ -352,3 +352,223 @@
     }
 }
 
+/* ===== REVIEW FORM SECTION ===== */
+
+.review-form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.btn-write-review {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.btn-write-review:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.review-form-card {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1px solid #fde68a;
+    border-radius: 16px;
+    padding: 2rem;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.review-form-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.review-form-title h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #92400e;
+    margin: 0;
+}
+
+.review-form-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #92400e;
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.review-form-close:hover {
+    background: rgba(146, 64, 14, 0.1);
+}
+
+.review-form-field {
+    margin-bottom: 1.25rem;
+}
+
+.review-form-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #78350f;
+    font-size: 0.95rem;
+}
+
+.review-form-stars {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.review-form-star {
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.review-form-star:hover {
+    transform: scale(1.2);
+}
+
+.review-form-rating-label {
+    margin-left: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #d97706;
+}
+
+.review-form-textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: vertical;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.review-form-textarea:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.review-form-images {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.review-form-img-preview {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #fde68a;
+}
+
+.review-form-img-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-form-img-remove {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.review-form-img-remove:hover {
+    background: #dc2626;
+}
+
+.review-form-img-add {
+    width: 80px;
+    height: 80px;
+    border: 2px dashed #fde68a;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.review-form-img-add span {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.review-form-img-add:hover {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.review-form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.review-submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .review-form-card {
+        padding: 1.25rem;
+    }
+    
+    .review-form-stars .review-form-star {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .review-form-img-preview,
+    .review-form-img-add {
+        width: 65px;
+        height: 65px;
+    }
+}

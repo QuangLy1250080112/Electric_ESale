@@ -1,18 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { useCart } from '../../hooks/useCart'
 import { useAuth } from '../../hooks/useAuth'
-import { Trash2, Edit2, Check, X, Upload, Star } from 'lucide-react'
+import { Trash2, Edit2, Check, X, Upload, Star, Camera, Send } from 'lucide-react'
 import * as productService from '../../services/productService'
 import * as orderService from '../../services/orderService'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getImageUrl } from '../../utils/url'
 import '../../styles/ProductDetails.css'
 
 export default function ProductDetails({ product, onUpdate }) {
   const [quantity, setQuantity] = useState(1)
   const { addItem } = useCart()
-  const { user } = useAuth()
+  const { user, isLoggedIn } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   // Edit Mode State
   const [isEditMode, setIsEditMode] = useState(false)
@@ -25,6 +26,21 @@ export default function ProductDetails({ product, onUpdate }) {
   const [reviews, setReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
 
+  // Review eligibility
+  const [canReview, setCanReview] = useState(false)
+  const [reviewEligibility, setReviewEligibility] = useState(null)
+
+  // Review form state
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewHover, setReviewHover] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewImages, setReviewImages] = useState([])
+  const [reviewPreviews, setReviewPreviews] = useState([])
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const reviewFileRef = useRef(null)
+  const reviewsSectionRef = useRef(null)
+
   useEffect(() => {
     if (product) {
       setEditData({
@@ -35,8 +51,24 @@ export default function ProductDetails({ product, onUpdate }) {
       })
       fetchImages()
       fetchReviews()
+      if (isLoggedIn) {
+        fetchReviewEligibility()
+      }
     }
-  }, [product])
+  }, [product, isLoggedIn])
+
+  // Scroll to reviews section if URL has #reviews hash
+  useEffect(() => {
+    if (location.hash === '#reviews' && reviewsSectionRef.current) {
+      setTimeout(() => {
+        reviewsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        // Auto-open review form if eligible
+        if (canReview) {
+          setShowReviewForm(true)
+        }
+      }, 300)
+    }
+  }, [location.hash, canReview, reviewsLoading])
 
   const fetchImages = async () => {
     try {
@@ -56,6 +88,17 @@ export default function ProductDetails({ product, onUpdate }) {
       console.error('Failed to fetch reviews')
     } finally {
       setReviewsLoading(false)
+    }
+  }
+
+  const fetchReviewEligibility = async () => {
+    try {
+      const data = await orderService.checkCanReview(product.ID_sanpham)
+      setReviewEligibility(data)
+      setCanReview(data.can_review)
+    } catch (error) {
+      // If not logged in or error, just don't show review form
+      setCanReview(false)
     }
   }
 
@@ -148,6 +191,43 @@ export default function ProductDetails({ product, onUpdate }) {
       alert('Lỗi khi tải ảnh lên')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // ===== Review Form Handlers =====
+  const handleReviewImageChange = (e) => {
+    const files = Array.from(e.target.files)
+    setReviewImages(prev => [...prev, ...files])
+    setReviewPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
+  }
+
+  const removeReviewImage = (idx) => {
+    setReviewImages(prev => prev.filter((_, i) => i !== idx))
+    setReviewPreviews(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleSubmitReview = async () => {
+    if (reviewRating < 1 || reviewRating > 5) {
+      alert('Vui lòng chọn số sao từ 1-5')
+      return
+    }
+    setReviewSubmitting(true)
+    try {
+      await orderService.createReview(id, reviewRating, reviewComment, reviewImages)
+      alert('Đánh giá thành công!')
+      // Reset form
+      setShowReviewForm(false)
+      setReviewRating(5)
+      setReviewComment('')
+      setReviewImages([])
+      setReviewPreviews([])
+      // Refresh data
+      fetchReviews()
+      fetchReviewEligibility()
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Lỗi khi gửi đánh giá')
+    } finally {
+      setReviewSubmitting(false)
     }
   }
 
@@ -284,7 +364,7 @@ export default function ProductDetails({ product, onUpdate }) {
       </div>
 
       {/* Reviews Section */}
-      <div className="reviews-section animate-fade-in">
+      <div className="reviews-section animate-fade-in" ref={reviewsSectionRef} id="reviews">
         <div className="reviews-header">
           <h2>Đánh giá sản phẩm</h2>
           {reviews.length > 0 && (
@@ -301,6 +381,107 @@ export default function ProductDetails({ product, onUpdate }) {
             </div>
           )}
         </div>
+
+        {/* Review Form for eligible users */}
+        {canReview && (
+          <div className="review-form-section">
+            {!showReviewForm ? (
+              <button className="btn-write-review" onClick={() => setShowReviewForm(true)}>
+                <Star size={18} />
+                Viết đánh giá của bạn
+              </button>
+            ) : (
+              <div className="review-form-card">
+                <div className="review-form-title">
+                  <h3>Đánh giá của bạn</h3>
+                  <button className="review-form-close" onClick={() => setShowReviewForm(false)}>
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Star Rating */}
+                <div className="review-form-field">
+                  <label>Chất lượng sản phẩm</label>
+                  <div className="review-form-stars">
+                    {[1,2,3,4,5].map(s => (
+                      <Star
+                        key={s}
+                        size={36}
+                        fill={(reviewHover || reviewRating) >= s ? '#f59e0b' : 'transparent'}
+                        color={(reviewHover || reviewRating) >= s ? '#f59e0b' : '#d1d5db'}
+                        className="review-form-star"
+                        onMouseEnter={() => setReviewHover(s)}
+                        onMouseLeave={() => setReviewHover(0)}
+                        onClick={() => setReviewRating(s)}
+                      />
+                    ))}
+                    <span className="review-form-rating-label">
+                      {reviewRating === 1 && 'Rất tệ'}
+                      {reviewRating === 2 && 'Tệ'}
+                      {reviewRating === 3 && 'Bình thường'}
+                      {reviewRating === 4 && 'Tốt'}
+                      {reviewRating === 5 && 'Tuyệt vời'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Comment */}
+                <div className="review-form-field">
+                  <label>Nhận xét</label>
+                  <textarea
+                    className="review-form-textarea"
+                    rows="4"
+                    placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div className="review-form-field">
+                  <label>Hình ảnh (tùy chọn)</label>
+                  <div className="review-form-images">
+                    {reviewPreviews.map((src, idx) => (
+                      <div key={idx} className="review-form-img-preview">
+                        <img src={src} alt="" />
+                        <button className="review-form-img-remove" onClick={() => removeReviewImage(idx)}>
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                    <button className="review-form-img-add" onClick={() => reviewFileRef.current.click()}>
+                      <Camera size={20} color="#94a3b8" />
+                      <span>Thêm ảnh</span>
+                    </button>
+                    <input
+                      type="file"
+                      ref={reviewFileRef}
+                      onChange={handleReviewImageChange}
+                      multiple
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <div className="review-form-actions">
+                  <button
+                    className="btn btn-primary review-submit-btn"
+                    onClick={handleSubmitReview}
+                    disabled={reviewSubmitting}
+                  >
+                    <Send size={16} />
+                    {reviewSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setShowReviewForm(false)}>
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         
         {reviewsLoading ? (
           <p style={{textAlign: 'center', color: '#94a3b8', padding: '2rem'}}>Đang tải đánh giá...</p>
@@ -354,7 +535,7 @@ function ReviewCard({ review }) {
           {imageUrls.map((url, idx) => (
             <img 
               key={idx} 
-              src={`http://localhost:5173${url}`} 
+              src={url.startsWith('/images/') ? url : `http://localhost:5173${url}`}
               alt={`Review ${idx + 1}`}
               className="review-image"
               onClick={() => setShowFullImages(true)}
@@ -368,7 +549,7 @@ function ReviewCard({ review }) {
           <div className="lightbox-content" onClick={e => e.stopPropagation()}>
             <button className="lightbox-close" onClick={() => setShowFullImages(false)}><X size={24} /></button>
             {imageUrls.map((url, idx) => (
-              <img key={idx} src={`http://localhost:5173${url}`} alt={`Review full ${idx + 1}`} className="lightbox-image" />
+              <img key={idx} src={url.startsWith('/images/') ? url : `http://localhost:5173${url}`} alt={`Review full ${idx + 1}`} className="lightbox-image" />
             ))}
           </div>
         </div>

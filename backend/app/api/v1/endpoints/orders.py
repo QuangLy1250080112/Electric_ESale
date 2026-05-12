@@ -36,19 +36,7 @@ async def get_my_orders(db: Session = Depends(get_db), current_user: TaiKhoan = 
     Get current user's completed orders with product info
     """
     orders = (
-        db.query(
-            Donhang.ID_donhang,
-            Donhang.uID,
-            Donhang.ID_sanpham,
-            Donhang.soluong,
-            Donhang.gia,
-            Donhang.trangthai,
-            Donhang.thoigiantao,
-            Donhang.updated_at,
-            SanPham.tenSP,
-            SanPham.HinhAnh_url,
-        )
-        .join(SanPham, Donhang.ID_sanpham == SanPham.ID_sanpham, isouter=True)
+        db.query(Donhang)
         .filter(Donhang.uID == current_user.uID)
         .order_by(desc(Donhang.thoigiantao))
         .all()
@@ -56,9 +44,8 @@ async def get_my_orders(db: Session = Depends(get_db), current_user: TaiKhoan = 
 
     result = []
     for o in orders:
-        # Get HinhAnh_url from product relationship
+        # Get product info (with images relationship for HinhAnh_url property)
         product = db.query(SanPham).filter(SanPham.ID_sanpham == o.ID_sanpham).first()
-        hinhanh = product.HinhAnh_url if product else None
 
         # Check if user has reviewed this product
         review = db.query(Reviews).filter(
@@ -75,8 +62,8 @@ async def get_my_orders(db: Session = Depends(get_db), current_user: TaiKhoan = 
             "trangthai": o.trangthai,
             "thoigiantao": o.thoigiantao.isoformat() if o.thoigiantao else None,
             "updated_at": o.updated_at.isoformat() if o.updated_at else None,
-            "tenSP": o.tenSP,
-            "HinhAnh_url": hinhanh,
+            "tenSP": product.tenSP if product else None,
+            "HinhAnh_url": product.HinhAnh_url if product else None,
             "has_review": review is not None,
             "review_rating": review.rating if review else None,
         })
@@ -185,6 +172,33 @@ async def checkout(
 
 
 # =================== REVIEWS ===================
+
+
+@router.get("/reviews/can-review/{ID_sanpham}", tags=["Reviews"])
+async def can_review_product(
+    ID_sanpham: int,
+    db: Session = Depends(get_db),
+    current_user: TaiKhoan = Depends(get_current_user),
+):
+    """
+    Check if user can review a product (must have purchased, not yet reviewed)
+    """
+    has_purchased = db.query(Donhang).filter(
+        Donhang.uID == current_user.uID,
+        Donhang.ID_sanpham == ID_sanpham,
+        Donhang.trangthai == "completed",
+    ).first() is not None
+
+    has_reviewed = db.query(Reviews).filter(
+        Reviews.uID == current_user.uID,
+        Reviews.ID_sanpham == ID_sanpham,
+    ).first() is not None
+
+    return {
+        "can_review": has_purchased and not has_reviewed,
+        "has_purchased": has_purchased,
+        "has_reviewed": has_reviewed,
+    }
 
 
 @router.get("/reviews/{ID_sanpham}", tags=["Reviews"])
