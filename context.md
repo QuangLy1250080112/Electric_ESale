@@ -49,6 +49,10 @@
   - **Registration Redesign**: Modernized `Register.jsx` to match `Login.jsx` aesthetic. Implemented a 2-step process: Request email verification -> Receive JWT link -> Complete registration.
   - **Forgot Password**: Added "Quên mật khẩu" flow to `Login.jsx` (enter email -> receive link -> reset password).
   - **Backend Support**: Added new endpoints (`/auth/request-register`, `/auth/forgot-password`, `/auth/reset-password`) using JWT tokens with `type` claims to verify email links securely.
+- [x] **Cart Backend Integration & Per-User Isolation:**
+  - Implemented `/api/v1/cart` endpoints to fully utilize the `giohang` database table, linking carts directly to the user's `uID`.
+  - Refactored `cartStore.js` to drop `zustand/middleware` `persist` and instead fetch the cart from the backend on login/app load.
+  - Cart state is now completely isolated per user account. When logging out, the local cart is cleared, ensuring a new user logging in does not see the previous user's cart.
 
 ## Technical Details
 

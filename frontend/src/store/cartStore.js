@@ -1,56 +1,88 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import * as cartService from '../services/cartService'
 
-export const useCartStore = create(
-  persist(
-    (set) => ({
-      items: [],
-      total: 0,
+export const useCartStore = create((set, get) => ({
+  items: [],
+  total: 0,
+  loading: false,
 
-      addItem: (product, qty = 1) =>
-        set((state) => {
-          const addedQuantity = typeof qty === 'number' && qty > 0 ? qty : 1;
-          const existingItem = state.items.find((item) => item.id === product.id)
-          if (existingItem) {
-            return {
-              items: state.items.map((item) =>
-                item.id === product.id ? { ...item, quantity: item.quantity + addedQuantity } : item
-              ),
-              total: state.total + (product.price * addedQuantity),
-            }
-          }
-          return {
-            items: [...state.items, { ...product, quantity: addedQuantity }],
-            total: state.total + (product.price * addedQuantity),
-          }
-        }),
-
-      removeItem: (productId) =>
-        set((state) => {
-          const item = state.items.find((item) => item.id === productId)
-          return {
-            items: state.items.filter((item) => item.id !== productId),
-            total: state.total - (item?.price || 0) * (item?.quantity || 1),
-          }
-        }),
-
-      updateQuantity: (productId, quantity) =>
-        set((state) => {
-          const item = state.items.find((item) => item.id === productId)
-          if (!item) return state
-          const priceDifference = item.price * (quantity - item.quantity)
-          return {
-            items: state.items.map((item) =>
-              item.id === productId ? { ...item, quantity } : item
-            ),
-            total: state.total + priceDifference,
-          }
-        }),
-
-      clearCart: () => set({ items: [], total: 0 }),
-    }),
-    {
-      name: 'esale-cart',
+  fetchCart: async () => {
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      set({ items: [], total: 0 });
+      return;
     }
-  )
-)
+    
+    set({ loading: true });
+    try {
+      const data = await cartService.getCart();
+      const formattedItems = data.items.map(item => ({
+        id: item.ID_sanpham,
+        cartItemId: item.ID_giohang,
+        name: item.tenSP,
+        price: item.gia,
+        quantity: item.soluong,
+        image_url: item.HinhAnh_url
+      }))
+      set({ items: formattedItems, total: data.total, loading: false })
+    } catch (error) {
+      console.error("Lỗi lấy giỏ hàng", error)
+      set({ items: [], total: 0, loading: false })
+    }
+  },
+
+  addItem: async (product, qty = 1) => {
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      alert("Vui lòng đăng nhập để thêm vào giỏ hàng")
+      return
+    }
+    try {
+      await cartService.addToCart(product.id, qty)
+      await get().fetchCart()
+    } catch (error) {
+      console.error(error)
+      alert("Lỗi thêm vào giỏ hàng")
+    }
+  },
+
+  removeItem: async (productId) => {
+    try {
+      const item = get().items.find(i => i.id === productId)
+      if (item && item.cartItemId) {
+        await cartService.removeFromCart(item.cartItemId)
+        await get().fetchCart()
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  },
+
+  updateQuantity: async (productId, quantity) => {
+    try {
+      const item = get().items.find(i => i.id === productId)
+      if (item && item.cartItemId) {
+        await cartService.updateCartItem(item.cartItemId, quantity)
+        await get().fetchCart()
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  },
+
+  clearCart: async () => {
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      try {
+        await cartService.clearCart()
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    set({ items: [], total: 0 })
+  },
+  
+  clearCartLocal: () => {
+    set({ items: [], total: 0 })
+  }
+}))

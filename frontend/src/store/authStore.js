@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useCartStore } from './cartStore'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -13,9 +14,16 @@ export const useAuthStore = create((set) => ({
       localStorage.removeItem('access_token')
     }
     set({ token, isLoggedIn: !!token })
+    
+    // Fetch cart right after login
+    if (token) {
+      useCartStore.getState().fetchCart()
+    }
   },
   logout: () => {
     localStorage.removeItem('access_token')
     set({ user: null, token: null, isLoggedIn: false })
+    // Clear cart locally on logout
+    useCartStore.getState().clearCartLocal()
   },
 }))
