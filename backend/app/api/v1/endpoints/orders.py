@@ -1,119 +1,321 @@
 """
-Orders endpoints (Donhang, PTThanhToan)
-- Create order
-- Get order details
+Orders endpoints (Donhang, Reviews)
+- Create order (checkout)
 - Get user orders
-- Update order status (admin)
-- Payment management
-- Reviews
+- Get all orders (admin)
+- Reviews CRUD with image upload
 """
 
-from fastapi import APIRouter
+import os
+import uuid
+import shutil
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile, Form
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from typing import Optional, List
+
+from app.core.database import get_db
+from app.core.security import get_current_user
+from app.models.order import Donhang, Reviews
+from app.models.product import SanPham
+from app.models.user import TaiKhoan
+from app.schemas.order import (
+    DonhangCreate,
+    DonhangResponse,
+    CheckoutRequest,
+    ReviewCreate,
+    ReviewResponse,
+)
 
 router = APIRouter()
 
 
 @router.get("", tags=["Orders"])
-async def get_orders():
+async def get_my_orders(db: Session = Depends(get_db), current_user: TaiKhoan = Depends(get_current_user)):
     """
-    Get user's orders (Donhang)
+    Get current user's completed orders with product info
     """
-    return {"message": "Get orders - to be implemented"}
+    orders = (
+        db.query(
+            Donhang.ID_donhang,
+            Donhang.uID,
+            Donhang.ID_sanpham,
+            Donhang.soluong,
+            Donhang.gia,
+            Donhang.trangthai,
+            Donhang.thoigiantao,
+            Donhang.updated_at,
+            SanPham.tenSP,
+            SanPham.HinhAnh_url,
+        )
+        .join(SanPham, Donhang.ID_sanpham == SanPham.ID_sanpham, isouter=True)
+        .filter(Donhang.uID == current_user.uID)
+        .order_by(desc(Donhang.thoigiantao))
+        .all()
+    )
+
+    result = []
+    for o in orders:
+        # Get HinhAnh_url from product relationship
+        product = db.query(SanPham).filter(SanPham.ID_sanpham == o.ID_sanpham).first()
+        hinhanh = product.HinhAnh_url if product else None
+
+        # Check if user has reviewed this product
+        review = db.query(Reviews).filter(
+            Reviews.uID == current_user.uID,
+            Reviews.ID_sanpham == o.ID_sanpham
+        ).first()
+
+        result.append({
+            "ID_donhang": o.ID_donhang,
+            "uID": o.uID,
+            "ID_sanpham": o.ID_sanpham,
+            "soluong": o.soluong,
+            "gia": o.gia,
+            "trangthai": o.trangthai,
+            "thoigiantao": o.thoigiantao.isoformat() if o.thoigiantao else None,
+            "updated_at": o.updated_at.isoformat() if o.updated_at else None,
+            "tenSP": o.tenSP,
+            "HinhAnh_url": hinhanh,
+            "has_review": review is not None,
+            "review_rating": review.rating if review else None,
+        })
+    return result
 
 
-@router.get("/{ID_donhang}", tags=["Orders"])
-async def get_order(ID_donhang: int):
+@router.get("/all", tags=["Orders"])
+async def get_all_orders(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: TaiKhoan = Depends(get_current_user),
+):
     """
-    Get order details by ID (Donhang)
+    Get all orders (admin only) with pagination
     """
-    return {"message": f"Get order {ID_donhang} - to be implemented"}
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Không có quyền truy cập")
+
+    total = db.query(Donhang).filter(Donhang.trangthai == "completed").count()
+    offset = (page - 1) * per_page
+
+    orders = (
+        db.query(Donhang)
+        .filter(Donhang.trangthai == "completed")
+        .order_by(desc(Donhang.thoigiantao))
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    result = []
+    for o in orders:
+        product = db.query(SanPham).filter(SanPham.ID_sanpham == o.ID_sanpham).first()
+        user = db.query(TaiKhoan).filter(TaiKhoan.uID == o.uID).first()
+        result.append({
+            "ID_donhang": o.ID_donhang,
+            "uID": o.uID,
+            "tenTK": user.tenTK if user else "N/A",
+            "ID_sanpham": o.ID_sanpham,
+            "tenSP": product.tenSP if product else "N/A",
+            "HinhAnh_url": product.HinhAnh_url if product else None,
+            "soluong": o.soluong,
+            "gia": o.gia,
+            "tong_tien": o.gia * o.soluong if o.gia and o.soluong else 0,
+            "trangthai": o.trangthai,
+            "thoigiantao": o.thoigiantao.isoformat() if o.thoigiantao else None,
+        })
+
+    return {
+        "orders": result,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page,
+    }
 
 
-@router.post("", tags=["Orders"])
-async def create_order():
+@router.post("/checkout", tags=["Orders"])
+async def checkout(
+    checkout_data: CheckoutRequest,
+    db: Session = Depends(get_db),
+    current_user: TaiKhoan = Depends(get_current_user),
+):
     """
-    Create new order from cart (Donhang)
+    Checkout: create orders and deduct stock for each item
     """
-    return {"message": "Create order - to be implemented"}
+    created_orders = []
+
+    for item in checkout_data.items:
+        # Verify product exists and has enough stock
+        product = db.query(SanPham).filter(SanPham.ID_sanpham == item.ID_sanpham).first()
+        if not product:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Không tìm thấy sản phẩm ID {item.ID_sanpham}",
+            )
+
+        current_stock = product.soluong or 0
+        if current_stock < item.soluong:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Sản phẩm '{product.tenSP}' không đủ số lượng trong kho (còn {current_stock})",
+            )
+
+        # Deduct stock
+        product.soluong = current_stock - item.soluong
+
+        # Create order record
+        order = Donhang(
+            uID=current_user.uID,
+            ID_sanpham=item.ID_sanpham,
+            soluong=item.soluong,
+            gia=item.gia,
+            trangthai="completed",
+        )
+        db.add(order)
+        created_orders.append(order)
+
+    db.commit()
+
+    return {
+        "message": f"Đã tạo {len(created_orders)} đơn hàng thành công",
+        "order_count": len(created_orders),
+    }
 
 
-@router.put("/{ID_donhang}", tags=["Orders"])
-async def update_order(ID_donhang: int):
-    """
-    Update order status (Donhang) - admin only
-    """
-    return {"message": f"Update order {ID_donhang} - to be implemented"}
+# =================== REVIEWS ===================
 
 
-@router.delete("/{ID_donhang}", tags=["Orders"])
-async def delete_order(ID_donhang: int):
+@router.get("/reviews/{ID_sanpham}", tags=["Reviews"])
+async def get_product_reviews(ID_sanpham: int, db: Session = Depends(get_db)):
     """
-    Cancel order (Donhang)
+    Get all reviews for a product
     """
-    return {"message": f"Delete order {ID_donhang} - to be implemented"}
+    reviews = (
+        db.query(Reviews)
+        .filter(Reviews.ID_sanpham == ID_sanpham)
+        .order_by(desc(Reviews.thoigiantao))
+        .all()
+    )
+
+    result = []
+    for r in reviews:
+        user = db.query(TaiKhoan).filter(TaiKhoan.uID == r.uID).first()
+        result.append({
+            "ID_review": r.ID_review,
+            "uID": r.uID,
+            "ID_sanpham": r.ID_sanpham,
+            "rating": r.rating,
+            "comment": r.comment,
+            "image_url": r.image_url,
+            "thoigiantao": r.thoigiantao.isoformat() if r.thoigiantao else None,
+            "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+            "tenTK": user.tenTK if user else "Ẩn danh",
+        })
+
+    return result
 
 
-# Payment (PTThanhToan)
-@router.post("/{ID_donhang}/payment", tags=["Orders"])
-async def create_payment(ID_donhang: int):
+@router.post("/reviews", tags=["Reviews"])
+async def create_review(
+    ID_sanpham: int = Form(...),
+    rating: int = Form(...),
+    comment: Optional[str] = Form(None),
+    images: List[UploadFile] = File(default=[]),
+    db: Session = Depends(get_db),
+    current_user: TaiKhoan = Depends(get_current_user),
+):
     """
-    Create payment for order (PTThanhToan)
-    
-    Parameters:
-    - PhuongThucTT: Payment method (Credit Card, E-wallet, Bank Transfer)
-    - tonggia: Total amount
+    Create a review for a product (must have purchased it)
+    Supports multiple image uploads
     """
-    return {"message": f"Create payment for order {ID_donhang} - to be implemented"}
+    # Check if user has purchased this product
+    order = db.query(Donhang).filter(
+        Donhang.uID == current_user.uID,
+        Donhang.ID_sanpham == ID_sanpham,
+        Donhang.trangthai == "completed",
+    ).first()
+
+    if not order:
+        raise HTTPException(
+            status_code=400,
+            detail="Bạn cần mua sản phẩm này trước khi đánh giá",
+        )
+
+    # Check if already reviewed
+    existing = db.query(Reviews).filter(
+        Reviews.uID == current_user.uID,
+        Reviews.ID_sanpham == ID_sanpham,
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Bạn đã đánh giá sản phẩm này rồi")
+
+    # Handle image uploads
+    image_urls = []
+    if images:
+        base_dir = os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(
+                            os.path.dirname(os.path.abspath(__file__))
+                        )
+                    )
+                )
+            )
+        )
+        upload_dir = os.path.join(base_dir, "frontend", "public", "images", "reviews")
+        os.makedirs(upload_dir, exist_ok=True)
+
+        for img_file in images:
+            if img_file.filename:  # Skip empty file inputs
+                ext = os.path.splitext(img_file.filename)[1]
+                fname = f"{uuid.uuid4()}{ext}"
+                fpath = os.path.join(upload_dir, fname)
+                with open(fpath, "wb") as buf:
+                    shutil.copyfileobj(img_file.file, buf)
+                image_urls.append(f"/images/reviews/{fname}")
+
+    # Store image URLs as comma-separated string
+    image_url_str = ",".join(image_urls) if image_urls else None
+
+    review = Reviews(
+        uID=current_user.uID,
+        ID_sanpham=ID_sanpham,
+        rating=rating,
+        comment=comment,
+        image_url=image_url_str,
+    )
+    db.add(review)
+    db.commit()
+    db.refresh(review)
+
+    return {
+        "ID_review": review.ID_review,
+        "rating": review.rating,
+        "comment": review.comment,
+        "image_url": review.image_url,
+        "message": "Đánh giá thành công",
+    }
 
 
-@router.get("/{ID_donhang}/payment", tags=["Orders"])
-async def get_payment(ID_donhang: int):
+@router.delete("/reviews/{ID_review}", tags=["Reviews"])
+async def delete_review(
+    ID_review: int,
+    db: Session = Depends(get_db),
+    current_user: TaiKhoan = Depends(get_current_user),
+):
     """
-    Get payment info for order (PTThanhToan)
+    Delete a review (owner or admin)
     """
-    return {"message": f"Get payment for order {ID_donhang} - to be implemented"}
+    review = db.query(Reviews).filter(Reviews.ID_review == ID_review).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đánh giá")
 
+    if review.uID != current_user.uID and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Không có quyền xóa đánh giá này")
 
-@router.put("/{ID_donhang}/payment", tags=["Orders"])
-async def update_payment(ID_donhang: int):
-    """
-    Update payment status (PTThanhToan) - admin only
-    """
-    return {"message": f"Update payment for order {ID_donhang} - to be implemented"}
-
-
-# Reviews
-@router.post("/{ID_sanpham}/reviews", tags=["Orders"])
-async def add_review(ID_sanpham: int):
-    """
-    Add review for product (Reviews)
-    
-    Parameters:
-    - rating: Rating 1-5
-    - comment: Review comment
-    """
-    return {"message": f"Add review for product {ID_sanpham} - to be implemented"}
-
-
-@router.get("/{ID_sanpham}/reviews", tags=["Orders"])
-async def get_reviews(ID_sanpham: int):
-    """
-    Get reviews for product (Reviews)
-    """
-    return {"message": f"Get reviews for product {ID_sanpham} - to be implemented"}
-
-
-@router.put("/reviews/{ID_review}", tags=["Orders"])
-async def update_review(ID_review: int):
-    """
-    Update review (Reviews)
-    """
-    return {"message": f"Update review {ID_review} - to be implemented"}
-
-
-@router.delete("/reviews/{ID_review}", tags=["Orders"])
-async def delete_review(ID_review: int):
-    """
-    Delete review (Reviews)
-    """
-    return {"message": f"Delete review {ID_review} - to be implemented"}
+    db.delete(review)
+    db.commit()
+    return {"message": "Đã xóa đánh giá"}

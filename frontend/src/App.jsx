@@ -11,6 +11,7 @@ import CategoryProducts from './pages/CategoryProducts'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderHistory from './pages/OrderHistory'
+import PaymentConfirm from './pages/PaymentConfirm'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Admin from './pages/Admin'
@@ -39,6 +40,7 @@ function App() {
           <Route path="categories/:id" element={<CategoryProducts />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
+          <Route path="payment-confirm" element={<PaymentConfirm />} />
           <Route path="orders" element={<OrderHistory />} />
           <Route 
             path="admin" 

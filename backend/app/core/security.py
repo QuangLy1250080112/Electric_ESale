@@ -44,3 +44,45 @@ def verify_token(token: str) -> dict:
         return payload
     except JWTError:
         return None
+
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security_scheme = HTTPBearer()
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+):
+    """Extract current user from Bearer token"""
+    from app.core.database import get_db
+    from app.models.user import TaiKhoan
+
+    token = credentials.credentials
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token không hợp lệ hoặc đã hết hạn",
+        )
+
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token không hợp lệ",
+        )
+
+    # Get DB session manually since we can't use Depends inside Depends
+    db = next(get_db())
+    try:
+        user = db.query(TaiKhoan).filter(TaiKhoan.tenTK == username).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Không tìm thấy tài khoản",
+            )
+        return user
+    finally:
+        db.close()

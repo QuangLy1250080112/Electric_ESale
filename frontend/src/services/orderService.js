@@ -1,31 +1,62 @@
-import api from './api'
+import api from "./api";
 
-// Get user orders
+// Get user's orders
 export const getOrders = async () => {
-  const response = await api.get('/v1/orders')
-  return response.data
-}
+  const response = await api.get("/v1/orders");
+  return response.data;
+};
 
 // Get order details
 export const getOrder = async (id) => {
-  const response = await api.get(`/v1/orders/${id}`)
-  return response.data
-}
+  const response = await api.get(`/v1/orders/${id}`);
+  return response.data;
+};
 
-// Create order
-export const createOrder = async (orderData) => {
-  const response = await api.post('/v1/orders', orderData)
-  return response.data
-}
+// Checkout - create orders and deduct stock
+export const checkout = async (items) => {
+  const response = await api.post("/v1/orders/checkout", { items });
+  return response.data;
+};
 
-// Update order status (admin)
-export const updateOrderStatus = async (id, status) => {
-  const response = await api.put(`/v1/orders/${id}`, { status })
-  return response.data
-}
+// Get all orders (admin)
+export const getAllOrders = async (page = 1, perPage = 10) => {
+  const response = await api.get("/v1/orders/all", {
+    params: { page, per_page: perPage },
+  });
+  return response.data;
+};
 
 // Cancel order
 export const cancelOrder = async (id) => {
-  const response = await api.delete(`/v1/orders/${id}`)
-  return response.data
-}
+  const response = await api.delete(`/v1/orders/${id}`);
+  return response.data;
+};
+
+// ===== REVIEWS =====
+
+// Get reviews for a product
+export const getProductReviews = async (productId) => {
+  const response = await api.get(`/v1/orders/reviews/${productId}`);
+  return response.data;
+};
+
+// Create review with image uploads
+export const createReview = async (productId, rating, comment, imageFiles = []) => {
+  const formData = new FormData();
+  formData.append("ID_sanpham", productId);
+  formData.append("rating", rating);
+  if (comment) formData.append("comment", comment);
+  for (const file of imageFiles) {
+    formData.append("images", file);
+  }
+  const response = await api.post("/v1/orders/reviews", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+// Delete review
+export const deleteReview = async (reviewId) => {
+  const response = await api.delete(`/v1/orders/reviews/${reviewId}`);
+  return response.data;
+};

@@ -62,5 +62,6 @@ class Reviews(Base):
     ID_sanpham = Column(Integer, ForeignKey("sanpham.ID_sanpham"))
     rating = Column(Integer)  # 1-5
     comment = Column(Text)
+    image_url = Column(String, nullable=True) # JSON or comma-separated for multiple images
     thoigiantao = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

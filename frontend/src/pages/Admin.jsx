@@ -10,9 +10,11 @@ import {
   Search,
   Edit,
   Trash2,
-  Filter
+  Filter,
+  ShoppingBag,
 } from "lucide-react";
 import * as productService from "../services/productService";
+import * as orderService from "../services/orderService";
 import { getImageUrl } from "../utils/url";
 import "../styles/Admin.css";
 
@@ -78,6 +80,13 @@ export default function Admin() {
             <Users size={20} />
             <span>Quản lí tài khoản</span>
           </button>
+          <button
+            className={`sidebar-link ${activeTab === "orders" ? "active" : ""}`}
+            onClick={() => setActiveTab("orders")}
+          >
+            <ShoppingBag size={20} />
+            <span>Quản lý đơn hàng</span>
+          </button>
         </nav>
       </aside>
 
@@ -92,6 +101,7 @@ export default function Admin() {
           <ManageSuppliersTab categories={categories} />
         )}
         {activeTab === "accounts" && <ManageAccountsTab />}
+        {activeTab === "orders" && <ManageOrdersTab />}
       </main>
     </div>
   );
@@ -341,7 +351,7 @@ function ManageProductsTab({ categories, suppliers }) {
     min_price: "",
     max_price: "",
     date_from: "",
-    date_to: ""
+    date_to: "",
   });
 
   useEffect(() => {
@@ -351,9 +361,11 @@ function ManageProductsTab({ categories, suppliers }) {
   const fetchProducts = async () => {
     try {
       const activeFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v !== "")
+        Object.entries(filters).filter(([_, v]) => v !== ""),
       );
-      setProducts(await productService.getProducts({ ...activeFilters, limit: 100 }));
+      setProducts(
+        await productService.getProducts({ ...activeFilters, limit: 100 }),
+      );
     } catch (err) {
       console.error(err);
     }
@@ -361,43 +373,131 @@ function ManageProductsTab({ categories, suppliers }) {
 
   return (
     <div className="admin-card card animate-fade-in">
-      <div className="admin-toolbar" style={{flexDirection: 'column', alignItems: 'stretch'}}>
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+      <div
+        className="admin-toolbar"
+        style={{ flexDirection: "column", alignItems: "stretch" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <h3>Quản lý sản phẩm</h3>
-          <button className="btn btn-secondary" onClick={() => setShowFilters(!showFilters)}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <Filter size={16} /> Bộ lọc
           </button>
         </div>
-        
+
         {showFilters && (
-          <div className="filters-panel" style={{marginTop: '1rem', padding: '1rem', background: 'var(--bg-alt)', borderRadius: '8px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem'}}>
+          <div
+            className="filters-panel"
+            style={{
+              marginTop: "1rem",
+              padding: "1rem",
+              background: "var(--bg-alt)",
+              borderRadius: "8px",
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "1rem",
+            }}
+          >
             <div>
               <label>Tên sản phẩm</label>
-              <input className="form-control" value={filters.search} onChange={e=>setFilters({...filters, search: e.target.value})} placeholder="Nhập tên..." />
+              <input
+                className="form-control"
+                value={filters.search}
+                onChange={(e) =>
+                  setFilters({ ...filters, search: e.target.value })
+                }
+                placeholder="Nhập tên..."
+              />
             </div>
             <div>
               <label>Tên nhà cung cấp</label>
-              <input className="form-control" value={filters.supplier_name} onChange={e=>setFilters({...filters, supplier_name: e.target.value})} placeholder="Tên nhà cung cấp..." />
+              <input
+                className="form-control"
+                value={filters.supplier_name}
+                onChange={(e) =>
+                  setFilters({ ...filters, supplier_name: e.target.value })
+                }
+                placeholder="Tên nhà cung cấp..."
+              />
             </div>
             <div>
               <label>Giá tối thiểu</label>
-              <input className="form-control" type="number" value={filters.min_price} onChange={e=>setFilters({...filters, min_price: e.target.value})} />
+              <input
+                className="form-control"
+                type="number"
+                value={filters.min_price}
+                onChange={(e) =>
+                  setFilters({ ...filters, min_price: e.target.value })
+                }
+              />
             </div>
             <div>
               <label>Giá tối đa</label>
-              <input className="form-control" type="number" value={filters.max_price} onChange={e=>setFilters({...filters, max_price: e.target.value})} />
+              <input
+                className="form-control"
+                type="number"
+                value={filters.max_price}
+                onChange={(e) =>
+                  setFilters({ ...filters, max_price: e.target.value })
+                }
+              />
             </div>
             <div>
               <label>Từ ngày</label>
-              <input className="form-control" type="date" value={filters.date_from} onChange={e=>setFilters({...filters, date_from: e.target.value})} />
+              <input
+                className="form-control"
+                type="date"
+                value={filters.date_from}
+                onChange={(e) =>
+                  setFilters({ ...filters, date_from: e.target.value })
+                }
+              />
             </div>
             <div>
               <label>Đến ngày</label>
-              <input className="form-control" type="date" value={filters.date_to} onChange={e=>setFilters({...filters, date_to: e.target.value})} />
+              <input
+                className="form-control"
+                type="date"
+                value={filters.date_to}
+                onChange={(e) =>
+                  setFilters({ ...filters, date_to: e.target.value })
+                }
+              />
             </div>
-            <div style={{gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem'}}>
-              <button className="btn btn-secondary" onClick={() => setFilters({search: "", supplier_name: "", min_price: "", max_price: "", date_from: "", date_to: ""})}>Xóa bộ lọc</button>
-              <button className="btn btn-primary" onClick={fetchProducts}><Search size={16} /> Áp dụng</button>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "0.5rem",
+              }}
+            >
+              <button
+                className="btn btn-secondary"
+                onClick={() =>
+                  setFilters({
+                    search: "",
+                    supplier_name: "",
+                    min_price: "",
+                    max_price: "",
+                    date_from: "",
+                    date_to: "",
+                  })
+                }
+              >
+                Xóa bộ lọc
+              </button>
+              <button className="btn btn-primary" onClick={fetchProducts}>
+                <Search size={16} /> Áp dụng
+              </button>
             </div>
           </div>
         )}
@@ -583,7 +683,7 @@ function ManageAccountsTab() {
     tenTK: "",
     matkhau: "",
     email: "",
-    role: "user" // user, staff, admin
+    role: "user", // user, staff, admin
   });
 
   useEffect(() => {
@@ -599,9 +699,9 @@ function ManageAccountsTab() {
         tenTK: formData.tenTK,
         matkhau: formData.matkhau,
         email: formData.email,
-        is_staff: formData.role === 'staff' || formData.role === 'admin',
-        is_admin: formData.role === 'admin'
-      }
+        is_staff: formData.role === "staff" || formData.role === "admin",
+        is_admin: formData.role === "admin",
+      };
       await productService.createAccount(submitData);
       alert("Đã thêm tài khoản");
       fetchAccounts();
@@ -657,10 +757,12 @@ function ManageAccountsTab() {
             />
           </div>
           <div className="form-group">
-            <select 
-              className="form-control" 
-              value={formData.role} 
-              onChange={(e) => setFormData({...formData, role: e.target.value})}
+            <select
+              className="form-control"
+              value={formData.role}
+              onChange={(e) =>
+                setFormData({ ...formData, role: e.target.value })
+              }
             >
               <option value="user">Khách hàng (User)</option>
               <option value="staff">Nhân viên (Staff)</option>
@@ -711,6 +813,131 @@ function ManageAccountsTab() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ================= MANAGE ORDERS TAB =================
+function ManageOrdersTab() {
+  const [ordersData, setOrdersData] = useState({ orders: [], total: 0, page: 1, total_pages: 1 });
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const perPage = 10;
+
+  useEffect(() => {
+    fetchOrders();
+  }, [page]);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const data = await orderService.getAllOrders(page, perPage);
+      setOrdersData(data);
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatPrice = (p) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(p);
+  };
+
+  const formatDate = (d) => {
+    if (!d) return "N/A";
+    return new Date(d).toLocaleDateString("vi-VN", {
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  };
+
+  if (loading && ordersData.orders.length === 0)
+    return <div style={{ padding: "2rem", textAlign: "center" }}>Đang tải đơn hàng...</div>;
+
+  return (
+    <div className="admin-card card animate-fade-in">
+      <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h3>Toàn bộ đơn hàng đã hoàn thành</h3>
+        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Tổng: {ordersData.total} đơn hàng</span>
+      </div>
+      <div className="admin-table-container">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Mã ĐH</th>
+              <th>Hình ảnh</th>
+              <th>Sản phẩm</th>
+              <th>Số lượng</th>
+              <th>Đơn giá</th>
+              <th>Tổng tiền</th>
+              <th>Ngày hoàn thành</th>
+              <th>Người mua</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ordersData.orders.map((order) => (
+              <tr key={order.ID_donhang}>
+                <td>#{order.ID_donhang}</td>
+                <td style={{ width: "60px" }}>
+                  <img
+                    src={getImageUrl(order.HinhAnh_url)}
+                    alt=""
+                    style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px" }}
+                  />
+                </td>
+                <td>{order.tenSP || `SP #${order.ID_sanpham}`}</td>
+                <td>{order.soluong}</td>
+                <td>{formatPrice(order.gia)}</td>
+                <td style={{ fontWeight: "600", color: "var(--primary)" }}>
+                  {formatPrice(order.tong_tien)}
+                </td>
+                <td style={{ fontSize: "0.85rem" }}>{formatDate(order.thoigiantao)}</td>
+                <td>{order.tenTK || `UID: ${order.uID}`}</td>
+              </tr>
+            ))}
+            {ordersData.orders.length === 0 && (
+              <tr>
+                <td colSpan="8" style={{ textAlign: "center", padding: "2rem" }}>
+                  Chưa có đơn hàng nào
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {ordersData.total_pages > 1 && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "1rem",
+            padding: "1.5rem",
+            borderTop: "1px solid var(--border)",
+          }}
+        >
+          <button
+            className="btn btn-secondary"
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+          >
+            ← Trang trước
+          </button>
+          <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            Trang {ordersData.page} / {ordersData.total_pages}
+          </span>
+          <button
+            className="btn btn-secondary"
+            disabled={page >= ordersData.total_pages}
+            onClick={() => setPage(page + 1)}
+          >
+            Trang sau →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

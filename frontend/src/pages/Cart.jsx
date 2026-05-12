@@ -1,31 +1,30 @@
+import { useState, useEffect } from "react";
 import { useCart } from "../hooks/useCart";
+import { useAuth } from "../hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
 import { getImageUrl } from "../utils/url";
-import { Trash2 } from "lucide-react";
-import * as productService from "../services/productService";
+import { Trash2, Minus, Plus } from "lucide-react";
+import * as orderService from "../services/orderService";
 import "../styles/Admin.css"; // Reuse admin table styles
 
 export default function Cart() {
-  const { items, total, removeItem } = useCart();
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const { items, total, removeItem, updateQuantity, clearCart } = useCart();
+  const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
 
   const handleRemove = async (item) => {
     try {
-      // Fetch current product to get latest stock
-      const product = await productService.getProduct(item.id);
-      const currentStock = product.soluong || 0;
-
-      // Add back the removed quantity to stock
-      await productService.updateProduct(item.id, {
-        soluong: currentStock + item.quantity,
-      });
-
-      // Remove from local cart
       removeItem(item.id);
-      alert("Đã xóa khỏi giỏ hàng và hoàn trả số lượng!");
     } catch (err) {
       alert("Lỗi khi xóa khỏi giỏ hàng");
     }
+  };
+
+  const handleQuantityChange = (item, newQty) => {
+    if (newQty < 1) return;
+    updateQuantity(item.id, newQty);
   };
 
   const formatPrice = (p) => {
@@ -34,6 +33,46 @@ export default function Cart() {
       currency: "VND",
     }).format(p);
   };
+
+  const handleCheckoutClick = () => {
+    if (items.length === 0) return;
+    if (!isLoggedIn) {
+      alert("Vui lòng đăng nhập trước khi thanh toán!");
+      navigate("/login");
+      return;
+    }
+    setShowCheckoutModal(true);
+  };
+
+  const handleConfirmCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const checkoutItems = items.map((item) => ({
+        ID_sanpham: item.id,
+        soluong: item.quantity,
+        gia: item.price,
+      }));
+
+      await orderService.checkout(checkoutItems);
+      clearCart();
+      setShowCheckoutModal(false);
+      alert("Thanh toán thành công! Đơn hàng đã được xác nhận.");
+    } catch (error) {
+      const msg = error.response?.data?.detail || "Có lỗi xảy ra khi thanh toán!";
+      alert(msg);
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  // Build QR data with user and cart info
+  const qrData = JSON.stringify({
+    items: items.map((i) => ({ id: i.id, name: i.name, qty: i.quantity, price: i.price })),
+    total,
+    user: user?.tenTK || "guest",
+  });
+  const paymentUrl = `${window.location.origin}/payment-confirm?data=${encodeURIComponent(qrData)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(paymentUrl)}`;
 
   if (items.length === 0) {
     return (
@@ -95,7 +134,28 @@ export default function Cart() {
                   </td>
                   <td>{item.name}</td>
                   <td>{formatPrice(item.price)}</td>
-                  <td>{item.quantity}</td>
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <button
+                        className="btn-icon"
+                        onClick={() => handleQuantityChange(item, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "white" }}
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span style={{ minWidth: "30px", textAlign: "center", fontWeight: "600" }}>
+                        {item.quantity}
+                      </span>
+                      <button
+                        className="btn-icon"
+                        onClick={() => handleQuantityChange(item, item.quantity + 1)}
+                        style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "white" }}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </td>
                   <td style={{ fontWeight: "bold" }}>
                     {formatPrice(item.price * item.quantity)}
                   </td>
@@ -132,12 +192,60 @@ export default function Cart() {
           </div>
           <button
             className="btn btn-primary btn-lg"
-            onClick={() => alert("Chức năng thanh toán đang được phát triển!")}
+            onClick={handleCheckoutClick}
           >
             Tiến hành thanh toán
           </button>
         </div>
       </div>
+
+      {showCheckoutModal && (
+        <div className="modal-overlay" onClick={() => setShowCheckoutModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{
+            padding: "2rem", textAlign: "center", maxWidth: "480px", width: "90%"
+          }}>
+            <h2 style={{ marginBottom: "0.5rem" }}>Xác nhận thanh toán</h2>
+            <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+              Quét mã QR bằng điện thoại hoặc nhấn "Xác nhận" để hoàn tất.
+            </p>
+
+            <div style={{ background: "#f5f5f5", padding: "1rem", borderRadius: "12px", display: "inline-block", marginBottom: "1rem" }}>
+              <img src={qrCodeUrl} alt="Payment QR Code" style={{ borderRadius: "8px" }} />
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ borderTop: "1px solid #eee", padding: "1rem 0" }}>
+                {items.map(item => (
+                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+                    <span>{item.name} × {item.quantity}</span>
+                    <strong>{formatPrice(item.price * item.quantity)}</strong>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.15rem", fontWeight: "bold", borderTop: "1px solid #eee", paddingTop: "0.75rem" }}>
+                <span>Tổng cộng:</span>
+                <span style={{ color: "var(--primary)" }}>{formatPrice(total)}</span>
+              </div>
+            </div>
+
+            <button 
+              className="btn btn-primary btn-lg"
+              style={{ width: "100%", marginBottom: "0.5rem" }}
+              onClick={handleConfirmCheckout}
+              disabled={checkoutLoading}
+            >
+              {checkoutLoading ? "Đang xử lý..." : "✓ Xác nhận thanh toán"}
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              style={{ width: "100%" }}
+              onClick={() => setShowCheckoutModal(false)}
+            >
+              Hủy bỏ
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
