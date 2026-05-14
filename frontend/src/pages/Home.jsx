@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import * as productService from "../services/productService";
+import * as newsService from "../services/newsService";
 import ProductCard from "./products/ProductCard";
 import ProductModal from "./products/ProductModal";
 import Loader from "../components/common/Loader";
@@ -24,6 +25,7 @@ import {
   Clock,
   Flame,
   User2,
+  Newspaper,
 } from "lucide-react";
 import "../styles/Home.css";
 
@@ -37,6 +39,7 @@ export default function Home() {
   const [allProducts, setAllProducts] = useState([]);
   const [newestProducts, setNewestProducts] = useState([]);
   const [hottestProducts, setHottestProducts] = useState([]);
+  const [latestNews, setLatestNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -50,6 +53,10 @@ export default function Home() {
   const ITEMS_PER_PAGE = 6;
   const [currentPage, setCurrentPage] = useState(0);
 
+  // News Pagination
+  const NEWS_PER_PAGE = 4;
+  const [currentNewsPage, setCurrentNewsPage] = useState(0);
+
   // Search from URL
   const [search, setSearch] = useState(searchParams.get("search") || "");
 
@@ -62,14 +69,16 @@ export default function Home() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [all, newest, hottest] = await Promise.all([
+        const [all, newest, hottest, newsData] = await Promise.all([
           productService.getProducts({ limit: 100 }),
           productService.getNewestProducts(10),
           productService.getHottestProducts(10),
+          newsService.getNews(0, 12),
         ]);
         setAllProducts(all);
         setNewestProducts(newest);
         setHottestProducts(hottest);
+        setLatestNews(newsData);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -455,6 +464,78 @@ export default function Home() {
           <Link to="/categories" className="btn btn-secondary btn-cta">
             <Layers size={18} />
             <span>Đến trang danh mục</span>
+            <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
+
+      {/* News Section */}
+      <section className="news-section">
+        <div className="section-header-centered">
+          <span className="section-tag">Tin tức</span>
+          <h2>
+            Tin tức <span className="gradient-text">mới nhất</span>
+          </h2>
+          <p>Cập nhật thông tin công nghệ và các chương trình khuyến mãi</p>
+        </div>
+
+        <div className="news-grid-home">
+          {latestNews.length === 0 ? (
+            <div className="empty-center">
+              <Newspaper size={48} className="empty-icon" />
+              <p>Chưa có bài viết nào.</p>
+            </div>
+          ) : (
+            <div className="news-grid">
+              {latestNews
+                .slice(
+                  currentNewsPage * NEWS_PER_PAGE,
+                  (currentNewsPage + 1) * NEWS_PER_PAGE
+                )
+                .map((news) => (
+                  <Link to={`/news/${news.id}`} key={news.id} className="news-card glass-card">
+                    <div className="news-image-wrapper">
+                      <img src={getImageUrl(news.anh_dai_dien)} alt={news.tieu_de} />
+                    </div>
+                    <div className="news-content">
+                      <h3 className="news-title">{news.tieu_de}</h3>
+                    </div>
+                  </Link>
+                ))}
+            </div>
+          )}
+        </div>
+
+        {/* News Pagination */}
+        {latestNews.length > NEWS_PER_PAGE && (
+          <div className="pagination-controls">
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentNewsPage((prev) => Math.max(0, prev - 1))}
+              disabled={currentNewsPage === 0}
+            >
+              <ChevronLeft size={20} />
+              <span>Trước</span>
+            </button>
+            <div className="pagination-info">
+              Trang <strong>{currentNewsPage + 1}</strong> /{" "}
+              <strong>{Math.ceil(latestNews.length / NEWS_PER_PAGE)}</strong>
+            </div>
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentNewsPage((prev) => Math.min(Math.ceil(latestNews.length / NEWS_PER_PAGE) - 1, prev + 1))}
+              disabled={currentNewsPage >= Math.ceil(latestNews.length / NEWS_PER_PAGE) - 1}
+            >
+              <span>Sau</span>
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
+
+        <div className="category-cta">
+          <Link to="/news" className="btn btn-primary btn-cta">
+            <Newspaper size={18} />
+            <span>Đến trang tin tức</span>
             <ArrowRight size={18} />
           </Link>
         </div>

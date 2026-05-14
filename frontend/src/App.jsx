@@ -15,6 +15,8 @@ import PaymentConfirm from './pages/PaymentConfirm'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Admin from './pages/Admin'
+import News from './pages/News'
+import NewsDetail from './pages/NewsDetail'
 import NotFound from './pages/NotFound'
 
 import Forbidden from './pages/Forbidden'
@@ -50,6 +52,8 @@ function App() {
           <Route path="checkout" element={<Checkout />} />
           <Route path="payment-confirm" element={<PaymentConfirm />} />
           <Route path="orders" element={<OrderHistory />} />
+          <Route path="news" element={<News />} />
+          <Route path="news/:id" element={<NewsDetail />} />
           <Route 
             path="admin" 
             element={

@@ -53,6 +53,16 @@
   - Implemented `/api/v1/cart` endpoints to fully utilize the `giohang` database table, linking carts directly to the user's `uID`.
   - Refactored `cartStore.js` to drop `zustand/middleware` `persist` and instead fetch the cart from the backend on login/app load.
   - Cart state is now completely isolated per user account. When logging out, the local cart is cleared, ensuring a new user logging in does not see the previous user's cart.
+- [x] **News System (Tin tức) Implementation:**
+  - **Database**: `tintuc` and `binhluan_tintuc` tables added.
+  - **Backend**: Created CRUD endpoints for `/news` and `/news/{id}/comments` with support for image upload.
+  - **Frontend**: 
+    - Replaced "About" with "Tin tức" in Header.
+    - Added a News section in Home page showing latest 12 articles with pagination (4 per view).
+    - Created `News.jsx` listing all news with pagination and Admin/Staff management actions.
+    - Added `NewsForm.jsx` modal to create/update news with `ckeditor5` for rich text content.
+    - Created `NewsDetail.jsx` displaying the full article and allowing logged-in users to comment.
+    - Admin can delete any comments in `NewsDetail.jsx`.
 
 ## Technical Details
 

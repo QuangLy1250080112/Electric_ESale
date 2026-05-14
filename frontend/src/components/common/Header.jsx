@@ -60,9 +60,9 @@ export default function Header() {
             </Link>
           )}
           
-          <Link to="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>
+          <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>
             <Info size={18} />
-            <span>Giới thiệu</span>
+            <span>Tin tức</span>
           </Link>
         </nav>
 

@@ -13,6 +13,7 @@ from app.api.v1.endpoints import (
     accounts,
     cart,
     orders,
+    news,
 )
 
 api_router = APIRouter()
@@ -26,3 +27,4 @@ api_router.include_router(suppliers.router, prefix="/suppliers", tags=["Supplier
 api_router.include_router(accounts.router, prefix="/accounts", tags=["Accounts"])
 api_router.include_router(cart.router, prefix="/cart", tags=["Shopping Cart"])
 api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
+api_router.include_router(news.router, prefix="/news", tags=["News"])
