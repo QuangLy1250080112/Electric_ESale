@@ -7,7 +7,7 @@ import {
   Package, 
   Layers, 
   Settings, 
-  Info, 
+  Newspaper, 
   User, 
   ShoppingCart,
   LogOut,
@@ -61,7 +61,7 @@ export default function Header() {
           )}
           
           <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>
-            <Info size={18} />
+            <Newspaper size={18} />
             <span>Tin tức</span>
           </Link>
         </nav>
