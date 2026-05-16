@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -12,6 +13,7 @@ import {
   Trash2,
   Filter,
   ShoppingBag,
+  AlertTriangle,
 } from "lucide-react";
 import * as productService from "../services/productService";
 import * as orderService from "../services/orderService";
@@ -124,6 +126,81 @@ function AddProductTab({ categories, suppliers }) {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
+  const [excelData, setExcelData] = useState([]);
+  const [showExcelModal, setShowExcelModal] = useState(false);
+  const excelInputRef = useRef(null);
+
+  const handleExcelUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const arrayBuffer = evt.target.result;
+        const wb = XLSX.read(arrayBuffer, { type: "array" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        const mapped = data.map((row, idx) => ({
+          id: idx,
+          tenSP: row.TenSP || "",
+          gia: row.Gia || 0,
+          soluong: row.Soluong || 0,
+          danhmuc: row.Danhmuc || "",
+          nhacungcap: row.Nhacungcap || "",
+          mota: row.Mota || "",
+          image: null,
+          preview: null,
+        }));
+        setExcelData(mapped);
+        setShowExcelModal(true);
+      } catch (err) {
+        alert("Lỗi khi đọc file Excel!");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
+  };
+
+  const handleExcelSubmit = async (finalData) => {
+    for (const row of finalData) {
+      if (!row.tenSP) return alert("Thiếu tên sản phẩm ở một số dòng");
+      const cat = categories.find((c) => c.tenDanhMuc.toLowerCase() === String(row.danhmuc).toLowerCase());
+      const sup = suppliers.find((s) => s.tenNhaCungCap.toLowerCase() === String(row.nhacungcap).toLowerCase());
+      if (!cat) return alert(`Danh mục "${row.danhmuc}" không tồn tại ở dòng có SP: ${row.tenSP}`);
+      if (!sup) return alert(`Nhà cung cấp "${row.nhacungcap}" không tồn tại ở dòng có SP: ${row.tenSP}`);
+    }
+
+    setLoading(true);
+    try {
+      for (const row of finalData) {
+        const cat = categories.find((c) => c.tenDanhMuc.toLowerCase() === String(row.danhmuc).toLowerCase());
+        const sup = suppliers.find((s) => s.tenNhaCungCap.toLowerCase() === String(row.nhacungcap).toLowerCase());
+
+        const product = await productService.addProduct({
+          tenSP: row.tenSP,
+          gia: parseFloat(row.gia),
+          soluong: parseInt(row.soluong),
+          ID_danhmuc: cat.ID_danhmuc,
+          supplier_ID: sup.ID_NhaCungCap,
+          mota: row.mota,
+        });
+
+        if (row.image) {
+          await productService.addProductImage(product.ID_sanpham, row.image);
+        }
+      }
+      alert("Nhập dữ liệu thành công!");
+      setShowExcelModal(false);
+      setExcelData([]);
+    } catch (err) {
+      alert("Lỗi khi nhập liệu: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (categories.length > 0 && formData.ID_danhmuc === 1)
       setFormData((p) => ({ ...p, ID_danhmuc: categories[0].ID_danhmuc }));
@@ -180,8 +257,23 @@ function AddProductTab({ categories, suppliers }) {
 
   return (
     <div className="admin-card card animate-fade-in">
-      <div className="card-header">
+      <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h3>Thêm sản phẩm mới</h3>
+        <div>
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            style={{ display: "none" }}
+            ref={excelInputRef}
+            onChange={handleExcelUpload}
+          />
+          <button
+            className="btn btn-secondary"
+            onClick={() => excelInputRef.current?.click()}
+          >
+            Nhập từ Excel
+          </button>
+        </div>
       </div>
       <form onSubmit={handleSubmit} className="admin-form">
         <div className="form-grid">
@@ -336,6 +428,14 @@ function AddProductTab({ categories, suppliers }) {
           </button>
         </div>
       </form>
+      <ExcelImportModal
+        isOpen={showExcelModal}
+        onClose={() => setShowExcelModal(false)}
+        initialData={excelData}
+        categories={categories}
+        suppliers={suppliers}
+        onSubmit={handleExcelSubmit}
+      />
     </div>
   );
 }
@@ -938,6 +1038,150 @@ function ManageOrdersTab() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function ExcelImportModal({ isOpen, onClose, initialData, categories, suppliers, onSubmit }) {
+  const [data, setData] = useState([]);
+  const [activeCatCell, setActiveCatCell] = useState(null);
+  const [activeSupCell, setActiveSupCell] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) setData(initialData);
+  }, [isOpen, initialData]);
+
+  if (!isOpen) return null;
+
+  const updateRow = (id, field, value) => {
+    setData((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  };
+
+  const deleteRow = (id) => {
+    setData((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleImageChange = (id, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const preview = URL.createObjectURL(file);
+      setData((prev) => prev.map((r) => (r.id === id ? { ...r, image: file, preview } : r)));
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content excel-modal-content">
+        <div className="modal-header">
+          <h3>Nhập dữ liệu từ Excel</h3>
+          <button onClick={onClose} className="close-modal">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="excel-table-container">
+          <table className="excel-table">
+            <thead>
+              <tr>
+                <th>Tên Sản Phẩm</th>
+                <th style={{ width: "100px" }}>Giá</th>
+                <th style={{ width: "80px" }}>Số Lượng</th>
+                <th>Danh Mục</th>
+                <th>Nhà Cung Cấp</th>
+                <th>Mô Tả</th>
+                <th style={{ width: "100px" }}>Hình Ảnh</th>
+                <th style={{ width: "60px" }}>Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row) => {
+                const catExists = categories.some((c) => c.tenDanhMuc.toLowerCase() === String(row.danhmuc).toLowerCase());
+                const supExists = suppliers.some((s) => s.tenNhaCungCap.toLowerCase() === String(row.nhacungcap).toLowerCase());
+
+                return (
+                  <tr key={row.id}>
+                    <td>
+                      <input className="excel-input" value={row.tenSP} onChange={(e) => updateRow(row.id, "tenSP", e.target.value)} />
+                    </td>
+                    <td>
+                      <input type="number" className="excel-input" value={row.gia} onChange={(e) => updateRow(row.id, "gia", e.target.value)} />
+                    </td>
+                    <td>
+                      <input type="number" className="excel-input" value={row.soluong} onChange={(e) => updateRow(row.id, "soluong", e.target.value)} />
+                    </td>
+                    <td style={{ position: "relative" }}>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <input
+                          className="excel-input"
+                          value={row.danhmuc}
+                          onChange={(e) => updateRow(row.id, "danhmuc", e.target.value)}
+                          onFocus={() => setActiveCatCell(row.id)}
+                          onBlur={() => setTimeout(() => setActiveCatCell(null), 200)}
+                        />
+                        {!catExists && <AlertTriangle size={16} className="warning-icon" title="Danh mục không tồn tại" />}
+                      </div>
+                      {activeCatCell === row.id && (
+                        <div className="autocomplete-dropdown" style={{ maxHeight: "150px" }}>
+                          {categories.filter((c) => c.tenDanhMuc.toLowerCase().includes(String(row.danhmuc).toLowerCase())).map((c) => (
+                            <div key={c.ID_danhmuc} className="autocomplete-item" onClick={() => updateRow(row.id, "danhmuc", c.tenDanhMuc)}>
+                              {c.tenDanhMuc}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ position: "relative" }}>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <input
+                          className="excel-input"
+                          value={row.nhacungcap}
+                          onChange={(e) => updateRow(row.id, "nhacungcap", e.target.value)}
+                          onFocus={() => setActiveSupCell(row.id)}
+                          onBlur={() => setTimeout(() => setActiveSupCell(null), 200)}
+                        />
+                        {!supExists && <AlertTriangle size={16} className="warning-icon" title="Nhà cung cấp không tồn tại" />}
+                      </div>
+                      {activeSupCell === row.id && (
+                        <div className="autocomplete-dropdown" style={{ maxHeight: "150px" }}>
+                          {suppliers.filter((s) => s.tenNhaCungCap.toLowerCase().includes(String(row.nhacungcap).toLowerCase())).map((s) => (
+                            <div key={s.ID_NhaCungCap} className="autocomplete-item" onClick={() => updateRow(row.id, "nhacungcap", s.tenNhaCungCap)}>
+                              {s.tenNhaCungCap}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <input className="excel-input" value={row.mota} onChange={(e) => updateRow(row.id, "mota", e.target.value)} />
+                    </td>
+                    <td>
+                      <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", color: "var(--primary)" }}>
+                        <Upload size={14} /> Tải ảnh
+                        <input type="file" style={{ display: "none" }} accept="image/*" onChange={(e) => handleImageChange(row.id, e)} />
+                      </label>
+                      {row.preview && (
+                        <img src={row.preview} alt="preview" style={{ width: "40px", height: "40px", objectFit: "cover", marginTop: "4px", borderRadius: "4px" }} />
+                      )}
+                    </td>
+                    <td>
+                      <button className="btn-icon delete" onClick={() => deleteRow(row.id)}>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="form-actions" style={{ marginTop: "1rem", paddingTop: "1rem" }}>
+          <button className="btn btn-secondary" onClick={onClose} style={{ marginRight: "1rem" }}>
+            Hủy
+          </button>
+          <button className="btn btn-primary" onClick={() => onSubmit(data)}>
+            Lưu Dữ Liệu
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

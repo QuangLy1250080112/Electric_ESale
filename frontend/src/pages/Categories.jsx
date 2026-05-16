@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import * as productService from "../services/productService";
 import { getImageUrl } from "../utils/url";
 import Loader from "../components/common/Loader";
+import ProductModal from "./products/ProductModal";
 import {
   Layers,
   Upload,
@@ -28,6 +29,7 @@ export default function Categories() {
   const navigate = useNavigate();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [newCat, setNewCat] = useState({ tenDanhMuc: "", mota: "" });
   const [newCatImage, setNewCatImage] = useState(null);
 
@@ -284,12 +286,22 @@ export default function Categories() {
             <Package size={28} color="var(--primary)" />
             Tất cả sản phẩm
           </h2>
-          <button
-            className="btn btn-secondary"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter size={18} /> Lọc sản phẩm
-          </button>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            {user?.is_admin && (
+              <button
+                className="btn btn-primary"
+                onClick={() => setIsProductModalOpen(true)}
+              >
+                <Plus size={18} /> Thêm sản phẩm
+              </button>
+            )}
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter size={18} /> Lọc sản phẩm
+            </button>
+          </div>
         </div>
 
         {showFilters && (
@@ -633,6 +645,13 @@ export default function Categories() {
           </div>
         </div>
       )}
+
+      {/* Product Modal */}
+      <ProductModal
+        isOpen={isProductModalOpen}
+        onClose={() => setIsProductModalOpen(false)}
+        onRefresh={() => fetchProducts(currentPage, filters)}
+      />
     </div>
   );
 }

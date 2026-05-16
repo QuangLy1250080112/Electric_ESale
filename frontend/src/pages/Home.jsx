@@ -43,9 +43,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Product modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   // Tab state: 'newest' | 'hottest' | 'all'
   const [activeTab, setActiveTab] = useState("newest");
 
@@ -370,15 +367,6 @@ export default function Home() {
             </button>
           </div>
 
-          {user?.is_admin && (
-            <button
-              className="btn btn-primary"
-              onClick={() => setIsModalOpen(true)}
-            >
-              <Plus size={18} />
-              <span>Thêm sản phẩm</span>
-            </button>
-          )}
         </div>
 
         {/* Search filter indicator */}
@@ -541,12 +529,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Product Modal */}
-      <ProductModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onRefresh={refreshProducts}
-      />
     </div>
   );
 }

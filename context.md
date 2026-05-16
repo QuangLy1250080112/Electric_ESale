@@ -68,6 +68,15 @@
     - Fixed image display issues for filenames with accents and spaces by properly encoding URLs.
     - Fixed News Form to allow saving articles with empty text fields.
     - Maintained original image filenames on upload and fixed image deletion logic upon article deletion to prevent orphaned files in `frontend/public/images/news`.
+- [x] **Product Management UI Updates:**
+  - Removed "Thêm sản phẩm" button from `Home.jsx` to clean up the UI.
+  - Added "Thêm sản phẩm" button inside `Categories.jsx` (under "Tất cả sản phẩm" section) for Admin users, utilizing the `ProductModal`.
+  - Added "Nhập từ Excel" feature in `Admin.jsx` (Add Product tab):
+    - Implemented Excel parsing using `xlsx` library.
+    - Created an interactive popup (`ExcelImportModal`) displaying the imported data in a table format with editable cells.
+    - Included real-time validation with warning icons for non-existent categories or suppliers.
+    - Added Autocomplete dropdowns for Category and Supplier editing directly within the table cells.
+    - Added manual image upload with preview for each row before final submission.
 
 ## Technical Details
 
