@@ -34,6 +34,8 @@
   - Redesigned `Cart.jsx` as a detailed table view.
   - Added `email` to Supplier and Account admin forms, added role select (User, Staff, Admin) to Account creation.
   - Added "Thêm danh mục" form to Categories page.
+  - Implemented advanced Product Search and Filtering (by Name, Category, dual-slider Price, and autocomplete Supplier) directly in `Categories.jsx` and `CategoryProducts.jsx`.
+  - Added infinite-style Pagination for products in category pages (30 products per page).
 - [x] **Product Reviews System (Full Implementation):**
   - **Database**: `reviews` table with columns: `ID_review`, `uID`, `ID_sanpham`, `rating`, `comment`, `image_url` (comma-separated for multiple images), `thoigiantao`, `updated_at`.
   - **Backend**: Review CRUD endpoints under `/orders/reviews/*`, including:

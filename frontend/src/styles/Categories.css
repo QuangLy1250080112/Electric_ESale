@@ -305,3 +305,43 @@
     transform: translateY(0);
   }
 }
+
+/* ===== DUAL SLIDER ===== */
+.dual-slider-container {
+  position: relative;
+  height: 24px;
+}
+
+.dual-slider {
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  z-index: 3;
+}
+
+.dual-slider::-webkit-slider-thumb {
+  pointer-events: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.dual-slider:nth-child(2) {
+  z-index: 4;
+}
+
+/* Hide default track for dual slider */
+.dual-slider::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  background: transparent;
+  height: 4px;
+}
