@@ -63,6 +63,9 @@
     - Added `NewsForm.jsx` modal to create/update news with `ckeditor5` for rich text content.
     - Created `NewsDetail.jsx` displaying the full article and allowing logged-in users to comment.
     - Admin can delete any comments in `NewsDetail.jsx`.
+    - Fixed image display issues for filenames with accents and spaces by properly encoding URLs.
+    - Fixed News Form to allow saving articles with empty text fields.
+    - Maintained original image filenames on upload and fixed image deletion logic upon article deletion to prevent orphaned files in `frontend/public/images/news`.
 
 ## Technical Details
 

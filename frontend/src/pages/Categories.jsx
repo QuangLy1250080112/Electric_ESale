@@ -97,7 +97,6 @@ export default function Categories() {
             <Layers size={32} />
           </div>
           <h1 style={{margin: 0}}>Danh mục sản phẩm</h1>
-          <p>Khám phá sản phẩm theo từng danh mục chuyên biệt</p>
         </div>
         {user?.is_admin && (
           <button className="btn btn-primary" onClick={() => setShowAddModal(true)} style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>

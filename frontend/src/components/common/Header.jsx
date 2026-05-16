@@ -53,17 +53,17 @@ export default function Header() {
             <span>Danh mục</span>
           </Link>
           
+          <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>
+            <Newspaper size={18} />
+            <span>Tin tức</span>
+          </Link>
+          
           {user?.is_admin && (
             <Link to="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>
               <Settings size={18} />
               <span>Quản trị</span>
             </Link>
           )}
-          
-          <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>
-            <Newspaper size={18} />
-            <span>Tin tức</span>
-          </Link>
         </nav>
 
         <div className="header-actions">

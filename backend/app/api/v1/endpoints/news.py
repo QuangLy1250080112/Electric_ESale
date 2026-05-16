@@ -29,9 +29,9 @@ def get_news(id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=TinTucResponse)
 def create_news(
-    tieu_de: str = Form(...),
-    mo_ta_ngan: str = Form(...),
-    noi_dung: str = Form(...),
+    tieu_de: str = Form(""),
+    mo_ta_ngan: str = Form(""),
+    noi_dung: str = Form(""),
     anh_dai_dien: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: TaiKhoan = Depends(get_current_user)
@@ -39,7 +39,7 @@ def create_news(
     if not current_user.is_admin and not current_user.is_staff:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     # save image
-    file_name = f"{tieu_de.replace(' ', '_')}_{anh_dai_dien.filename}"
+    file_name = anh_dai_dien.filename
     file_path = os.path.join(UPLOAD_DIR, file_name)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(anh_dai_dien.file, buffer)
@@ -74,19 +74,24 @@ def update_news(
     if not news:
         raise HTTPException(status_code=404, detail="News not found")
     
-    if tieu_de:
+    if tieu_de is not None:
         news.tieu_de = tieu_de
-    if mo_ta_ngan:
+    if mo_ta_ngan is not None:
         news.mo_ta_ngan = mo_ta_ngan
-    if noi_dung:
+    if noi_dung is not None:
         news.noi_dung = noi_dung
     if anh_dai_dien:
         # delete old image
-        old_image_path = f"../frontend/public{news.anh_dai_dien}"
-        if os.path.exists(old_image_path):
-            os.remove(old_image_path)
+        if news.anh_dai_dien:
+            old_file_name = os.path.basename(news.anh_dai_dien)
+            old_image_path = os.path.join(UPLOAD_DIR, old_file_name)
+            if os.path.exists(old_image_path):
+                try:
+                    os.remove(old_image_path)
+                except Exception:
+                    pass
             
-        file_name = f"{news.tieu_de.replace(' ', '_')}_{anh_dai_dien.filename}"
+        file_name = anh_dai_dien.filename
         file_path = os.path.join(UPLOAD_DIR, file_name)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(anh_dai_dien.file, buffer)
@@ -105,9 +110,14 @@ def delete_news(id: int, db: Session = Depends(get_db), current_user: TaiKhoan =
         raise HTTPException(status_code=404, detail="News not found")
     
     # delete image
-    old_image_path = f"../frontend/public{news.anh_dai_dien}"
-    if os.path.exists(old_image_path):
-        os.remove(old_image_path)
+    if news.anh_dai_dien:
+        old_file_name = os.path.basename(news.anh_dai_dien)
+        old_image_path = os.path.join(UPLOAD_DIR, old_file_name)
+        if os.path.exists(old_image_path):
+            try:
+                os.remove(old_image_path)
+            except Exception:
+                pass
         
     db.delete(news)
     db.commit()

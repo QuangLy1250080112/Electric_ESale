@@ -55,11 +55,6 @@ export default function NewsForm({ news, onClose, onRefresh }) {
       return;
     }
 
-    if (!formData.tieu_de || !formData.mo_ta_ngan || !formData.noi_dung) {
-      setError("Vui lòng điền đầy đủ thông tin");
-      return;
-    }
-
     try {
       setSubmitting(true);
       const submitData = new FormData();
