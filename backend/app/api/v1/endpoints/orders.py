@@ -152,23 +152,53 @@ async def checkout(
         # Deduct stock
         product.soluong = current_stock - item.soluong
 
-        # Create order record
+        # Create order record with pending status
         order = Donhang(
             uID=current_user.uID,
             ID_sanpham=item.ID_sanpham,
             soluong=item.soluong,
             gia=item.gia,
-            trangthai="completed",
+            trangthai="pending",
         )
         db.add(order)
         created_orders.append(order)
 
     db.commit()
 
+    # Refresh to get IDs
+    order_ids = []
+    for o in created_orders:
+        db.refresh(o)
+        order_ids.append(o.ID_donhang)
+
     return {
         "message": f"Đã tạo {len(created_orders)} đơn hàng thành công",
         "order_count": len(created_orders),
+        "order_ids": order_ids,
     }
+
+
+@router.put("/{order_id}/status", tags=["Orders"])
+async def update_order_status(
+    order_id: int,
+    status: str = "completed",
+    db: Session = Depends(get_db),
+    current_user: TaiKhoan = Depends(get_current_user),
+):
+    """
+    Update order status (used by frontend after delivery simulation)
+    """
+    order = db.query(Donhang).filter(Donhang.ID_donhang == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
+
+    # Only the order owner or admin can update
+    if order.uID != current_user.uID and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Không có quyền")
+
+    order.trangthai = status
+    db.commit()
+    return {"message": "Cập nhật trạng thái thành công", "trangthai": status}
 
 
 # =================== REVIEWS ===================

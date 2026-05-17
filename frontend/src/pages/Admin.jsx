@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,11 +14,14 @@ import {
   Filter,
   ShoppingBag,
   AlertTriangle,
+  MapPin,
 } from "lucide-react";
 import * as productService from "../services/productService";
 import * as orderService from "../services/orderService";
+import * as settingsService from "../services/settingsService";
 import { getImageUrl } from "../utils/url";
 import "../styles/Admin.css";
+import "leaflet/dist/leaflet.css";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -89,6 +92,13 @@ export default function Admin() {
             <ShoppingBag size={20} />
             <span>Quản lý đơn hàng</span>
           </button>
+          <button
+            className={`sidebar-link ${activeTab === "map" ? "active" : ""}`}
+            onClick={() => setActiveTab("map")}
+          >
+            <MapPin size={20} />
+            <span>Bản đồ</span>
+          </button>
         </nav>
       </aside>
 
@@ -104,6 +114,7 @@ export default function Admin() {
         )}
         {activeTab === "accounts" && <ManageAccountsTab />}
         {activeTab === "orders" && <ManageOrdersTab />}
+        {activeTab === "map" && <ShopMapTab />}
       </main>
     </div>
   );
@@ -1038,6 +1049,168 @@ function ManageOrdersTab() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ================= SHOP MAP TAB =================
+function ShopMapTab() {
+  const [settings, setSettings] = useState({
+    latitude: 10.8231, longitude: 106.6297, address: "",
+    shipping_fee_per_km: 5000, delivery_seconds_per_km: 5,
+  });
+  const [searchText, setSearchText] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const searchTimeout = useRef(null);
+
+  useEffect(() => {
+    settingsService.getShopSettings().then((data) => {
+      setSettings(data);
+      setSearchText(data.address || "");
+      setMapReady(true);
+    }).catch(() => setMapReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    let cancelled = false;
+
+    import("leaflet").then((leafletModule) => {
+      if (cancelled || mapRef.current) return;
+      const L = leafletModule.default || leafletModule;
+
+      // Fix default marker icon
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+      });
+
+      const container = document.getElementById("shop-map");
+      if (!container) return;
+
+      const map = L.map(container).setView([settings.latitude, settings.longitude], 15);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
+
+      const redIcon = L.icon({
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+      });
+
+      const marker = L.marker([settings.latitude, settings.longitude], { icon: redIcon }).addTo(map);
+      markerRef.current = marker;
+      mapRef.current = map;
+
+      map.on("click", async (e) => {
+        const { lat, lng } = e.latlng;
+        marker.setLatLng([lat, lng]);
+        setSettings((p) => ({ ...p, latitude: lat, longitude: lng }));
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          const data = await res.json();
+          if (data.display_name) {
+            setSettings((p) => ({ ...p, address: data.display_name }));
+            setSearchText(data.display_name);
+          }
+        } catch (err) { /* ignore */ }
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+    };
+  }, [mapReady]);
+
+  const handleSearchChange = (val) => {
+    setSearchText(val);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (val.length < 3) { setSuggestions([]); return; }
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=5`);
+        setSuggestions(await res.json());
+      } catch { setSuggestions([]); }
+    }, 300);
+  };
+
+  const selectSuggestion = (s) => {
+    const lat = parseFloat(s.lat), lng = parseFloat(s.lon);
+    setSettings((p) => ({ ...p, latitude: lat, longitude: lng, address: s.display_name }));
+    setSearchText(s.display_name);
+    setSuggestions([]);
+    if (mapRef.current) mapRef.current.setView([lat, lng], 15);
+    if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await settingsService.updateShopSettings(settings);
+      alert("Lưu thành công!");
+    } catch { alert("Lỗi khi lưu!"); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="admin-card card animate-fade-in">
+      <div className="card-header"><h3>Bản đồ cửa hàng</h3></div>
+      <div style={{ padding: "1.5rem" }}>
+        <div style={{ position: "relative", marginBottom: "1rem" }}>
+          <label className="form-label">Tìm kiếm địa chỉ</label>
+          <input className="form-control" value={searchText} placeholder="Nhập địa chỉ..."
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onBlur={() => setTimeout(() => setSuggestions([]), 200)}
+          />
+          {suggestions.length > 0 && (
+            <div className="autocomplete-dropdown" style={{ zIndex: 1000 }}>
+              {suggestions.map((s, i) => (
+                <div key={i} className="autocomplete-item" onClick={() => selectSuggestion(s)}>
+                  {s.display_name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div id="shop-map" style={{ height: "400px", borderRadius: "12px", marginBottom: "1.5rem", border: "1px solid var(--border)" }} />
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Phí ship mỗi 1km (VNĐ)</label>
+            <input className="form-control" type="number" value={settings.shipping_fee_per_km}
+              onChange={(e) => setSettings({ ...settings, shipping_fee_per_km: parseFloat(e.target.value) || 0 })}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Thời gian giao mỗi km (giây)</label>
+            <input className="form-control" type="number" value={settings.delivery_seconds_per_km}
+              onChange={(e) => setSettings({ ...settings, delivery_seconds_per_km: parseFloat(e.target.value) || 5 })}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Địa chỉ hiện tại</label>
+            <input className="form-control" value={settings.address} readOnly style={{ background: "#f5f5f5" }} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tọa độ</label>
+            <input className="form-control" readOnly style={{ background: "#f5f5f5" }}
+              value={`${settings.latitude.toFixed(6)}, ${settings.longitude.toFixed(6)}`}
+            />
+          </div>
+        </div>
+        <div className="form-actions" style={{ marginTop: "1rem" }}>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+            {saving ? "Đang lưu..." : "Lưu cài đặt"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

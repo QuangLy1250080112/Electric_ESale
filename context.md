@@ -77,11 +77,23 @@
     - Included real-time validation with warning icons for non-existent categories or suppliers.
     - Added Autocomplete dropdowns for Category and Supplier editing directly within the table cells.
     - Added manual image upload with preview for each row before final submission.
+- [x] **Shop Map & Delivery System:**
+  - **Database**: `shop_settings` table with `latitude`, `longitude`, `address`, `shipping_fee_per_km`, `delivery_seconds_per_km`.
+  - **Backend**: New `/v1/settings/shop` endpoints (GET public, PUT admin-only) for shop location and shipping config.
+  - **Backend**: Checkout now creates orders with `trangthai="pending"` and returns `order_ids`. New `PUT /v1/orders/{id}/status` endpoint to update order status.
+  - **Admin "Bản đồ" Tab**: Leaflet map with click-to-pin (red marker), Nominatim address search with autocomplete dropdown, editable fields for shipping fee/km and delivery seconds/km.
+  - **Cart Checkout Modal**: Now uses browser geolocation to calculate distance (Haversine formula) from user to shop, displays shipping fee, and shows grand total (products + shipping).
+  - **Checkout Page** (`Checkout.jsx`): 4-step animated delivery tracking:
+    1. "Đang tiếp nhận đơn" (5s with pulse animation)
+    2. "Đã xác nhận đơn hàng" (2s)
+    3. "Đang giao hàng" (Leaflet map with animated green marker moving from shop → user, duration = distance × seconds_per_km)
+    4. "Giao hàng thành công" — orders updated to `trangthai="completed"`, user can now review products.
+  - **Excel Import Modal Fix**: Enlarged to 95vw × 85vh, column text uses `white-space: nowrap` to prevent truncation, autocomplete dropdowns positioned directly below input cells.
 
 ## Technical Details
 
 - **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT), smtplib
-- **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React
+- **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React, Leaflet
 - **Database**: PostgreSQL (Active)
 - **Image Storage**: `frontend/public/images/products`, `frontend/public/images/categories`, `frontend/public/images/reviews`
 - **API Base URL**: `http://localhost:8000/api/v1`
@@ -94,6 +106,9 @@
 - **Partial updates** on PUT endpoints use `.dict(exclude_unset=True)` to avoid overwriting fields with nulls.
 - **SanPham.HinhAnh_url** is a Python `@property`, not a database column — cannot be used in SQL query projections. Always load via ORM object.
 - **Review eligibility** checked server-side: user must have a completed order for the product and no existing review.
+- **Leaflet** loaded via dynamic `import("leaflet")` to avoid SSR/require issues in Vite.
+- **Checkout** page receives order data via `useNavigate` state — no URL params needed.
+- **Order lifecycle**: `pending` → `completed` (only after delivery simulation finishes on frontend).
 
 ## Guidelines
 

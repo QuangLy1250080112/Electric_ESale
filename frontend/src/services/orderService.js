@@ -18,6 +18,14 @@ export const checkout = async (items) => {
   return response.data;
 };
 
+// Update order status (after delivery simulation)
+export const updateOrderStatus = async (orderId, status = "completed") => {
+  const response = await api.put(`/v1/orders/${orderId}/status`, null, {
+    params: { status },
+  });
+  return response.data;
+};
+
 // Get all orders (admin)
 export const getAllOrders = async (page = 1, perPage = 10) => {
   const response = await api.get("/v1/orders/all", {

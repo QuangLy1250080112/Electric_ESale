@@ -197,7 +197,7 @@ export default function Home() {
       {/* About Section */}
       <section className="about-section" id="about">
         <div className="section-header-centered">
-          <span className="section-tag">Giới thiệu</span>
+          <span className="section-tag">Tin tức</span>
           <h2>
             Chào mừng đến với <span className="gradient-text">ESale</span>
           </h2>

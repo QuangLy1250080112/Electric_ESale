@@ -309,26 +309,32 @@
 }
 
 .excel-modal-content {
-  max-width: 1200px;
+  max-width: 95vw;
+  width: 95vw;
+  max-height: 85vh;
 }
 
 .excel-table-container {
   overflow-x: auto;
   margin-top: 1rem;
-  max-height: 50vh;
+  max-height: 55vh;
   overflow-y: auto;
 }
 
 .excel-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .excel-table th, .excel-table td {
-  padding: 0.5rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
   text-align: left;
   font-size: 0.85rem;
+  white-space: nowrap;
+  vertical-align: top;
+  position: relative;
 }
 
 .excel-table th {
@@ -336,13 +342,25 @@
   position: sticky;
   top: 0;
   z-index: 2;
+  font-weight: 600;
+}
+
+.excel-table td .autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  max-height: 180px;
 }
 
 .excel-input {
   width: 100%;
+  min-width: 80px;
   border: 1px solid transparent;
-  padding: 0.25rem;
+  padding: 0.35rem 0.5rem;
   background: transparent;
+  font-size: 0.85rem;
 }
 
 .excel-input:focus {
@@ -354,5 +372,39 @@
 .warning-icon {
   color: #eab308;
   margin-left: 0.25rem;
+  flex-shrink: 0;
 }
+
+/* Checkout animations */
+@keyframes pulse-anim {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.pulse-animation {
+  animation: pulse-anim 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-bar-anim {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.loading-bar {
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #2563eb);
+  border-radius: 2px;
+  animation: loading-bar-anim 1.5s ease-in-out infinite;
+}
+
+@keyframes spin-anim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-animation {
+  animation: spin-anim 1s linear infinite;
+}
+
 
