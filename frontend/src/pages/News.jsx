@@ -70,12 +70,12 @@ export default function News() {
   const totalPages = Math.ceil(newsList.length / ITEMS_PER_PAGE);
   const paginatedNews = newsList.slice(
     currentPage * ITEMS_PER_PAGE,
-    (currentPage + 1) * ITEMS_PER_PAGE
+    (currentPage + 1) * ITEMS_PER_PAGE,
   );
 
   return (
     <div className="news-page">
-      <div className="section-header-centered" style={{ marginTop: '2rem' }}>
+      <div className="section-header-centered" style={{ marginTop: "2rem" }}>
         <span className="section-tag">Tin tức</span>
         <h2>
           Tin tức & <span className="gradient-text">Sự kiện</span>
@@ -118,19 +118,26 @@ export default function News() {
               <div key={news.id} className="news-list-item glass-card">
                 <Link to={`/news/${news.id}`} className="news-item-link">
                   <div className="news-item-image">
-                    <img src={getImageUrl(news.anh_dai_dien)} alt={news.tieu_de} />
+                    <img
+                      src={getImageUrl(news.anh_dai_dien)}
+                      alt={news.tieu_de}
+                    />
                   </div>
                   <div className="news-item-content">
                     <h3>{news.tieu_de}</h3>
                     <p className="news-item-desc">{news.mo_ta_ngan}</p>
                     <div className="news-item-meta">
                       <Clock size={14} />
-                      <span>{new Date(news.ngay_dang).toLocaleDateString('vi-VN')}</span>
-                      <span className="news-author">Bởi {news.nguoi_viet?.tenTK}</span>
+                      <span>
+                        {new Date(news.ngay_dang).toLocaleDateString("vi-VN")}
+                      </span>
+                      <span className="news-author">
+                        Bởi {news.nguoi_viet?.tenTK}
+                      </span>
                     </div>
                   </div>
                 </Link>
-                
+
                 {(user?.is_admin || user?.is_staff) && (
                   <div className="news-item-actions">
                     <button
@@ -155,7 +162,7 @@ export default function News() {
         )}
 
         {totalPages > 1 && (
-          <div className="pagination-controls" style={{ marginTop: '2rem' }}>
+          <div className="pagination-controls" style={{ marginTop: "2rem" }}>
             <button
               className="pagination-btn"
               onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
@@ -170,7 +177,9 @@ export default function News() {
             </div>
             <button
               className="pagination-btn"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+              onClick={() =>
+                setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
+              }
               disabled={currentPage >= totalPages - 1}
             >
               <span>Sau</span>

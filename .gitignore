@@ -12,6 +12,4 @@ frontend/.env.local
 
 # Hệ thống & IDE
 .vscode/
-.idea/
-.DS_Store
-Thumbs.db
+node_modules
