@@ -47,7 +47,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("newest");
 
   // Pagination
-  const ITEMS_PER_PAGE = 6;
+  const ITEMS_PER_PAGE = 4;
   const [currentPage, setCurrentPage] = useState(0);
 
   // News Pagination
@@ -386,63 +386,90 @@ export default function Home() {
           </div>
         )}
 
-        {/* Product Grid */}
-        <div className="products-grid-home">
-          {loading ? (
-            <div className="loading-center">
-              <Loader />
-            </div>
-          ) : error ? (
-            <div className="error-center">
-              <p>Đã xảy ra lỗi: {error}</p>
-              <button
-                className="btn btn-secondary"
-                onClick={() => window.location.reload()}
-              >
-                Thử lại
-              </button>
-            </div>
-          ) : paginatedProducts.length === 0 ? (
-            <div className="empty-center">
-              <Sparkles size={48} className="empty-icon" />
-              <p>Không tìm thấy sản phẩm nào.</p>
-            </div>
-          ) : (
-            <div className="product-grid">
-              {paginatedProducts.map((product) => (
-                <ProductCard
-                  key={product.ID_sanpham || product.id}
-                  product={product}
-                  onDelete={refreshProducts}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="pagination-controls">
+        {/* Product Grid Wrapper for Side Navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Prev Button */}
+          {totalPages > 1 && (
             <button
               className="pagination-btn"
               onClick={handlePrevPage}
               disabled={currentPage === 0}
+              style={{ flexShrink: 0, padding: '0.75rem', borderRadius: '50%', zIndex: 2 }}
             >
-              <ChevronLeft size={20} />
-              <span>Trước</span>
+              <ChevronLeft size={24} />
             </button>
-            <div className="pagination-info">
-              Trang <strong>{currentPage + 1}</strong> /{" "}
-              <strong>{totalPages}</strong>
-            </div>
+          )}
+
+          {/* Product Grid */}
+          <div className="products-grid-home" style={{ flex: 1, overflow: 'hidden' }}>
+            {loading ? (
+              <div className="loading-center">
+                <Loader />
+              </div>
+            ) : error ? (
+              <div className="error-center">
+                <p>Đã xảy ra lỗi: {error}</p>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => window.location.reload()}
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : paginatedProducts.length === 0 ? (
+              <div className="empty-center">
+                <Sparkles size={48} className="empty-icon" />
+                <p>Không tìm thấy sản phẩm nào.</p>
+              </div>
+            ) : (
+              <div className="product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+                {paginatedProducts.map((product) => (
+                  <ProductCard
+                    key={product.ID_sanpham || product.id}
+                    product={product}
+                    onDelete={refreshProducts}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Next Button */}
+          {totalPages > 1 && (
             <button
               className="pagination-btn"
               onClick={handleNextPage}
               disabled={currentPage >= totalPages - 1}
+              style={{ flexShrink: 0, padding: '0.75rem', borderRadius: '50%', zIndex: 2 }}
             >
-              <span>Sau</span>
-              <ChevronRight size={20} />
+              <ChevronRight size={24} />
             </button>
+          )}
+        </div>
+
+        {/* Page numbers at the bottom */}
+        {totalPages > 1 && (
+          <div className="pagination-controls" style={{ marginTop: '1rem' }}>
+            <div className="pagination-info" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {Array.from({ length: totalPages }).map((_, idx) => (
+                <span 
+                  key={idx} 
+                  style={{ 
+                    display: 'inline-flex', width: '32px', height: '32px', 
+                    alignItems: 'center', justifyContent: 'center', 
+                    border: idx === currentPage ? '2px solid var(--primary)' : '1px solid var(--border)',
+                    borderRadius: '6px', cursor: 'pointer',
+                    backgroundColor: idx === currentPage ? 'var(--primary)' : 'white',
+                    color: idx === currentPage ? 'white' : 'var(--text-main)',
+                    fontWeight: idx === currentPage ? 'bold' : 'normal',
+                    transition: 'all 0.2s ease'
+                  }} 
+                  onClick={() => setCurrentPage(idx)}
+                >
+                  {idx + 1}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

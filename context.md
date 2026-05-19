@@ -89,6 +89,11 @@
     3. "Đang giao hàng" (Leaflet map with animated green marker moving from shop → user, duration = distance × seconds_per_km)
     4. "Giao hàng thành công" — orders updated to `trangthai="completed"`, user can now review products.
   - **Excel Import Modal Fix**: Enlarged to 95vw × 85vh, column text uses `white-space: nowrap` to prevent truncation, autocomplete dropdowns positioned directly below input cells.
+- [x] **Pagination & UI Improvements:**
+  - `Home.jsx`: Products list shows 4 per row with side navigation buttons and square page numbers below.
+  - `Categories.jsx`: "Tất cả sản phẩm" paginated to 25 items/page (5 rows × 5 cols), with square page numbers below.
+  - `Admin.jsx`: All lists (Products, Suppliers, Accounts, Orders) paginated to 6 items per page.
+  - `Header.jsx`: Automatically scroll to top (`window.scrollTo(0, 0)`) when route changes.
 
 ## Technical Details
 

@@ -465,6 +465,9 @@ function ManageProductsTab({ categories, suppliers }) {
     date_to: "",
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -477,6 +480,7 @@ function ManageProductsTab({ categories, suppliers }) {
       setProducts(
         await productService.getProducts({ ...activeFilters, limit: 100 }),
       );
+      setCurrentPage(1);
     } catch (err) {
       console.error(err);
     }
@@ -625,7 +629,7 @@ function ManageProductsTab({ categories, suppliers }) {
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => (
+            {products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((p) => (
               <tr
                 key={p.ID_sanpham}
                 onClick={() => navigate(`/products/${p.ID_sanpham}`)}
@@ -665,6 +669,20 @@ function ManageProductsTab({ categories, suppliers }) {
           </tbody>
         </table>
       </div>
+      
+      {Math.ceil(products.length / itemsPerPage) > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", padding: "1.5rem", borderTop: "1px solid var(--border)" }}>
+          <button className="btn btn-secondary" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+            ← Trang trước
+          </button>
+          <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            Trang {currentPage} / {Math.ceil(products.length / itemsPerPage)}
+          </span>
+          <button className="btn btn-secondary" disabled={currentPage === Math.ceil(products.length / itemsPerPage)} onClick={() => setCurrentPage(p => p + 1)}>
+            Trang sau →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -678,6 +696,9 @@ function ManageSuppliersTab({ categories }) {
     email: "",
     ID_danhmuc: 1,
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     fetchSuppliers();
@@ -760,7 +781,7 @@ function ManageSuppliersTab({ categories }) {
             </tr>
           </thead>
           <tbody>
-            {suppliers.map((s) => (
+            {suppliers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((s) => (
               <tr key={s.ID_NhaCungCap}>
                 <td>{s.tenNhaCungCap}</td>
                 <td>{s.sdt}</td>
@@ -783,6 +804,20 @@ function ManageSuppliersTab({ categories }) {
           </tbody>
         </table>
       </div>
+      
+      {Math.ceil(suppliers.length / itemsPerPage) > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", padding: "1.5rem", borderTop: "1px solid var(--border)" }}>
+          <button className="btn btn-secondary" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+            ← Trang trước
+          </button>
+          <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            Trang {currentPage} / {Math.ceil(suppliers.length / itemsPerPage)}
+          </span>
+          <button className="btn btn-secondary" disabled={currentPage === Math.ceil(suppliers.length / itemsPerPage)} onClick={() => setCurrentPage(p => p + 1)}>
+            Trang sau →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -796,6 +831,9 @@ function ManageAccountsTab() {
     email: "",
     role: "user", // user, staff, admin
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     fetchAccounts();
@@ -901,7 +939,7 @@ function ManageAccountsTab() {
             </tr>
           </thead>
           <tbody>
-            {accounts.map((a) => (
+            {accounts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((a) => (
               <tr key={a.uID}>
                 <td>{a.tenTK}</td>
                 <td>{a.email}</td>
@@ -924,6 +962,20 @@ function ManageAccountsTab() {
           </tbody>
         </table>
       </div>
+      
+      {Math.ceil(accounts.length / itemsPerPage) > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", padding: "1.5rem", borderTop: "1px solid var(--border)" }}>
+          <button className="btn btn-secondary" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+            ← Trang trước
+          </button>
+          <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            Trang {currentPage} / {Math.ceil(accounts.length / itemsPerPage)}
+          </span>
+          <button className="btn btn-secondary" disabled={currentPage === Math.ceil(accounts.length / itemsPerPage)} onClick={() => setCurrentPage(p => p + 1)}>
+            Trang sau →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -933,7 +985,7 @@ function ManageOrdersTab() {
   const [ordersData, setOrdersData] = useState({ orders: [], total: 0, page: 1, total_pages: 1 });
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const perPage = 10;
+  const perPage = 6;
 
   useEffect(() => {
     fetchOrders();

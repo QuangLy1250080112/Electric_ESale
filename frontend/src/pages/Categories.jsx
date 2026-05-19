@@ -40,7 +40,7 @@ export default function Categories() {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const ITEMS_PER_PAGE = 30;
+  const ITEMS_PER_PAGE = 25;
   const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
@@ -495,7 +495,7 @@ export default function Categories() {
             <p>Không tìm thấy sản phẩm phù hợp.</p>
           </div>
         ) : (
-          <div className="category-products-grid">
+          <div className="category-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }}>
             {products.map((product) => {
               const name = product.tenSP || product.name;
               const price = product.gia || product.price;
@@ -544,15 +544,22 @@ export default function Categories() {
               disabled={currentPage === 0}
               onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
             >
-              <ChevronLeft size={18} /> Trước
+              <ChevronLeft size={18} />
             </button>
-            <span style={{ fontWeight: 600 }}>Trang {currentPage + 1}</span>
+            <span style={{ 
+              display: 'inline-flex', width: '32px', height: '32px', 
+              alignItems: 'center', justifyContent: 'center', 
+              border: '2px solid var(--primary)', borderRadius: '6px', 
+              backgroundColor: 'var(--primary)', color: 'white', fontWeight: 'bold'
+            }}>
+              {currentPage + 1}
+            </span>
             <button
               className="btn btn-secondary"
               disabled={!hasNextPage}
               onClick={() => setCurrentPage((p) => p + 1)}
             >
-              Sau <ChevronRight size={18} />
+              <ChevronRight size={18} />
             </button>
           </div>
         )}
