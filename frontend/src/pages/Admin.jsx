@@ -23,6 +23,32 @@ import { getImageUrl } from "../utils/url";
 import "../styles/Admin.css";
 import "leaflet/dist/leaflet.css";
 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line, Bar, Pie } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 export default function Admin() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("add-product");
@@ -987,6 +1013,153 @@ function ManageOrdersTab() {
   const [page, setPage] = useState(1);
   const perPage = 6;
 
+  // Analytics State
+  const [timeRange, setTimeRange] = useState("30days");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [analyticsData, setAnalyticsData] = useState([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  // Track the actual date range of the last successful fetch for Excel naming
+  const [fetchedDateRange, setFetchedDateRange] = useState({ start: "", end: "" });
+
+  // Helper: format local date as YYYY-MM-DD
+  const toLocalDateStr = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  // Core fetch: always receives explicit params to avoid stale closure
+  const fetchAnalytics = async (range, start, end) => {
+    let resolvedStart = start;
+    let resolvedEnd = end;
+
+    if (range === "today") {
+      const today = toLocalDateStr(new Date());
+      resolvedStart = today + "T00:00:00";
+      resolvedEnd   = today + "T23:59:59";
+    } else if (range === "7days") {
+      const d = new Date(); d.setDate(d.getDate() - 7);
+      resolvedStart = toLocalDateStr(d) + "T00:00:00";
+      resolvedEnd   = "";
+    } else if (range === "30days") {
+      const d = new Date(); d.setDate(d.getDate() - 30);
+      resolvedStart = toLocalDateStr(d) + "T00:00:00";
+      resolvedEnd   = "";
+    } else if (range === "custom") {
+      if (!start || !end) return;
+      resolvedStart = start + "T00:00:00";
+      resolvedEnd   = end   + "T23:59:59";
+    }
+
+    setAnalyticsLoading(true);
+    try {
+      const data = await orderService.getOrdersAnalytics(resolvedStart, resolvedEnd);
+      setAnalyticsData(data);
+      // Save the resolved date strings for Excel filename (only the date part)
+      setFetchedDateRange({
+        start: resolvedStart.substring(0, 10),
+        end: resolvedEnd ? resolvedEnd.substring(0, 10) : toLocalDateStr(new Date()),
+      });
+    } catch (err) {
+      console.error("Failed to fetch analytics:", err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Load default (30 days) on mount only
+  useEffect(() => {
+    fetchAnalytics("30days", "", "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleExportExcel = () => {
+    const groupedByDate = {};
+    
+    analyticsData.forEach(item => {
+      const dateStr = new Date(item.thoigiantao).toLocaleDateString("vi-VN");
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = { revenue: 0, products: new Set() };
+      }
+      groupedByDate[dateStr].revenue += item.tong_tien;
+      groupedByDate[dateStr].products.add(`${item.tenSP} - ${item.tenDanhMuc}`);
+    });
+    
+    const rows = [];
+    for (const [dateStr, data] of Object.entries(groupedByDate)) {
+      rows.push({
+        "Ngày": dateStr,
+        "Doanh thu": data.revenue,
+        "Sản phẩm": Array.from(data.products).join(", ")
+      });
+    }
+    
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Doanh Thu");
+    const { start, end } = fetchedDateRange;
+    const filename = `DoanhThu_${start || "all"}_${end || toLocalDateStr(new Date())}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+  };
+
+  // Chart Logic
+  const chartGrouped = {};
+  const pieGrouped = {};
+  
+  analyticsData.forEach(item => {
+    // For Revenue Over Time
+    const dateStr = new Date(item.thoigiantao).toLocaleDateString("vi-VN");
+    if (!chartGrouped[dateStr]) chartGrouped[dateStr] = 0;
+    chartGrouped[dateStr] += item.tong_tien;
+    
+    // For Category Pie Chart
+    const cat = item.motaDanhMuc && item.motaDanhMuc !== "N/A" ? item.motaDanhMuc : item.tenDanhMuc;
+    if (!pieGrouped[cat]) pieGrouped[cat] = 0;
+    pieGrouped[cat] += item.tong_tien;
+  });
+  
+  const chartData = {
+    labels: Object.keys(chartGrouped),
+    datasets: [
+      {
+        type: "line",
+        label: "Xu hướng (VNĐ)",
+        data: Object.values(chartGrouped),
+        borderColor: "rgba(239, 68, 68, 1)",
+        borderWidth: 2,
+        tension: 0.3,
+        fill: false,
+      },
+      {
+        type: "bar",
+        label: "Doanh thu (VNĐ)",
+        data: Object.values(chartGrouped),
+        backgroundColor: "rgba(59, 130, 246, 0.6)",
+        borderColor: "rgba(59, 130, 246, 1)",
+        borderWidth: 1,
+      }
+    ]
+  };
+
+  const pieData = {
+    labels: Object.keys(pieGrouped),
+    datasets: [{
+      data: Object.values(pieGrouped),
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(199, 199, 199, 0.7)',
+      ],
+      borderWidth: 1,
+    }]
+  };
+
   useEffect(() => {
     fetchOrders();
   }, [page]);
@@ -1021,11 +1194,102 @@ function ManageOrdersTab() {
     return <div style={{ padding: "2rem", textAlign: "center" }}>Đang tải đơn hàng...</div>;
 
   return (
-    <div className="admin-card card animate-fade-in">
-      <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h3>Toàn bộ đơn hàng đã hoàn thành</h3>
-        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Tổng: {ordersData.total} đơn hàng</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+      {/* Analytics Section */}
+      <div className="admin-card card animate-fade-in">
+        <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <h3>Biểu đồ doanh thu</h3>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+            <select
+              className="form-control"
+              style={{ width: "auto" }}
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              <option value="today">Hôm nay</option>
+              <option value="7days">7 ngày qua</option>
+              <option value="30days">30 ngày qua</option>
+              <option value="custom">Tùy chỉnh...</option>
+            </select>
+            {timeRange === "custom" && (
+              <>
+                <input
+                  type="date"
+                  className="form-control"
+                  style={{ width: "auto" }}
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                />
+                <span style={{ color: "var(--text-muted)" }}>→</span>
+                <input
+                  type="date"
+                  className="form-control"
+                  style={{ width: "auto" }}
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                />
+              </>
+            )}
+            <button
+              className="btn btn-secondary"
+              onClick={() => fetchAnalytics(timeRange, startDate, endDate)}
+              disabled={analyticsLoading || (timeRange === "custom" && (!startDate || !endDate))}
+              style={{ display: "flex", gap: "0.5rem", alignItems: "center", minWidth: "110px", justifyContent: "center" }}
+            >
+              {analyticsLoading ? (
+                <span style={{ fontSize: "0.85rem" }}>Đang tải...</span>
+              ) : (
+                <>
+                  <Search size={15} /> Xác nhận
+                </>
+              )}
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={handleExportExcel}
+              style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
+            >
+              <Upload size={16} /> Xuất Excel
+            </button>
+          </div>
+        </div>
+        {analyticsLoading ? (
+          <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-muted)" }}>Đang tải dữ liệu...</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1.5rem", padding: "1.5rem" }}>
+            <div style={{ height: "350px" }}>
+              <Bar
+                key={JSON.stringify(chartData.labels)}
+                data={chartData}
+                options={{ maintainAspectRatio: false, animation: { duration: 700 }, scales: { y: { beginAtZero: true } } }}
+              />
+            </div>
+            <div style={{ height: "350px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <h4 style={{ marginBottom: "1rem", textAlign: "center", color: "var(--text-main)" }}>Tỉ trọng danh mục</h4>
+              <div style={{ flex: 1, width: "100%", position: "relative" }}>
+                {Object.keys(pieGrouped).length > 0 ? (
+                  <Pie
+                    key={JSON.stringify(Object.keys(pieGrouped))}
+                    data={pieData}
+                    options={{ maintainAspectRatio: false, animation: { duration: 700 } }}
+                  />
+                ) : (
+                  <div style={{ display: "flex", height: "100%", justifyContent: "center", alignItems: "center", color: "var(--text-muted)" }}>
+                    Chưa có dữ liệu trong khoảng thời gian này
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Orders List Section */}
+      <div className="admin-card card animate-fade-in">
+        <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3>Toàn bộ đơn hàng đã hoàn thành</h3>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Tổng: {ordersData.total} đơn hàng</span>
+        </div>
       <div className="admin-table-container">
         <table className="admin-table">
           <thead>
@@ -1101,6 +1365,7 @@ function ManageOrdersTab() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

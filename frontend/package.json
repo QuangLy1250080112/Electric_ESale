@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:backend": "cd ../backend && uvicorn app.main:app --reload",
+    "dev:all": "concurrently --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"bgBlue.bold,bgGreen.bold\" \"cd ../backend && uvicorn app.main:app --reload\" \"vite\"",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx",
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^9.2.1",
     "eslint": "^8.54.0",
     "eslint-plugin-react": "^7.33.2",
     "vite": "^5.0.8"

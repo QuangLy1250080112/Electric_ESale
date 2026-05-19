@@ -34,6 +34,15 @@ export const getAllOrders = async (page = 1, perPage = 10) => {
   return response.data;
 };
 
+// Get order analytics
+export const getOrdersAnalytics = async (startDate, endDate) => {
+  const params = {};
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  const response = await api.get("/v1/orders/analytics", { params });
+  return response.data;
+};
+
 // Cancel order
 export const cancelOrder = async (id) => {
   const response = await api.delete(`/v1/orders/${id}`);

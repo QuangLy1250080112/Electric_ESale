@@ -122,6 +122,70 @@ async def get_all_orders(
     }
 
 
+@router.get("/analytics", tags=["Orders"])
+async def get_orders_analytics(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: TaiKhoan = Depends(get_current_user),
+):
+    """
+    Get all completed orders for analytics, optionally filtered by date.
+    Returns data needed for revenue chart and excel export.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Không có quyền truy cập")
+
+    from datetime import datetime
+
+    query = db.query(Donhang).filter(Donhang.trangthai == "completed")
+
+    def parse_dt(s):
+        """Parse ISO datetime string to naive datetime."""
+        # Remove trailing Z or timezone offset, then parse
+        s = s.strip()
+        if s.endswith("Z"):
+            s = s[:-1]  # strip Z
+        # Remove +HH:MM or -HH:MM suffix
+        if len(s) > 19 and (s[19] == "+" or s[19] == "-"):
+            s = s[:19]
+        return datetime.fromisoformat(s)
+
+    if start_date:
+        try:
+            query = query.filter(Donhang.thoigiantao >= parse_dt(start_date))
+        except (ValueError, IndexError) as e:
+            raise HTTPException(status_code=422, detail=f"Invalid start_date: {start_date}")
+
+    if end_date:
+        try:
+            query = query.filter(Donhang.thoigiantao <= parse_dt(end_date))
+        except (ValueError, IndexError) as e:
+            raise HTTPException(status_code=422, detail=f"Invalid end_date: {end_date}")
+
+    orders = query.order_by(Donhang.thoigiantao).all()
+
+    from app.models.product import DanhMuc
+    result = []
+    for o in orders:
+        product = db.query(SanPham).filter(SanPham.ID_sanpham == o.ID_sanpham).first()
+        category = None
+        if product:
+            category = db.query(DanhMuc).filter(DanhMuc.ID_danhmuc == product.ID_danhmuc).first()
+
+        result.append({
+            "thoigiantao": o.thoigiantao.isoformat() if o.thoigiantao else None,
+            "gia": o.gia,
+            "soluong": o.soluong,
+            "tong_tien": (o.gia * o.soluong) if o.gia and o.soluong else 0,
+            "tenSP": product.tenSP if product else "N/A",
+            "tenDanhMuc": category.tenDanhMuc if category else "N/A",
+            "motaDanhMuc": category.mota if category else "N/A"
+        })
+
+    return result
+
+
 @router.post("/checkout", tags=["Orders"])
 async def checkout(
     checkout_data: CheckoutRequest,

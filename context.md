@@ -88,12 +88,19 @@
     2. "Đã xác nhận đơn hàng" (2s)
     3. "Đang giao hàng" (Leaflet map with animated green marker moving from shop → user, duration = distance × seconds_per_km)
     4. "Giao hàng thành công" — orders updated to `trangthai="completed"`, user can now review products.
-  - **Excel Import Modal Fix**: Enlarged to 95vw × 85vh, column text uses `white-space: nowrap` to prevent truncation, autocomplete dropdowns positioned directly below input cells.
 - [x] **Pagination & UI Improvements:**
   - `Home.jsx`: Products list shows 4 per row with side navigation buttons and square page numbers below.
   - `Categories.jsx`: "Tất cả sản phẩm" paginated to 25 items/page (5 rows × 5 cols), with square page numbers below.
   - `Admin.jsx`: All lists (Products, Suppliers, Accounts, Orders) paginated to 6 items per page.
   - `Header.jsx`: Automatically scroll to top (`window.scrollTo(0, 0)`) when route changes.
+- [x] **Order Analytics & Export (Admin):**
+  - **Backend**: Added `GET /v1/orders/analytics` endpoint to fetch aggregated completed orders by date range. Also returns `motaDanhMuc` for category descriptions.
+  - **Frontend**: 
+    - Added a Mixed Chart (Line + Bar) in `Admin.jsx` (ManageOrdersTab) showing revenue trends based on the `gia` column from the `donhang` table.
+    - Added a Pie Chart side-by-side to display Category Revenue percentage (using `motaDanhMuc` as labels).
+  - **Features**: 
+    - Time filter (Today, 7 days, 30 days, Custom range). Data and charts automatically and instantly update with animations upon any date selection or changes.
+    - Export to Excel groups data by Date, displaying Total Revenue and a unique list of Products (Format: "Product Name - Category Name"). Exported file name dynamically includes the date range for better tracking (e.g. `DoanhThu_YYYY-MM-DD_den_YYYY-MM-DD.xlsx`).
 
 ## Technical Details
 
