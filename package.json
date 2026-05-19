@@ -1,0 +1,10 @@
+{
+  "name": "esale-root",
+  "version": "1.0.0",
+  "scripts": {
+    "dev:all": "concurrently --kill-others --names \"FRONTEND,BACKEND\" --prefix-colors \"bgGreen.bold,bgBlue.bold\" \"cd frontend && npm run dev\" \"cd backend && uvicorn app.main:app --reload\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
