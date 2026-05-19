@@ -13,3 +13,4 @@ frontend/.env.local
 # Hệ thống & IDE
 .vscode/
 node_modules
+venv
