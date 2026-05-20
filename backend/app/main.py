@@ -27,6 +27,14 @@ memory_handler = MemoryLogHandler()
 memory_handler.setFormatter(logging.Formatter('%(message)s'))
 logger.addHandler(memory_handler)
 
+# Tự động khởi tạo Database Tables nếu chưa tồn tại
+from app.core.database import engine, Base
+import app.models  # Bắt buộc để load tất cả tables
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    logger.error(f"Error creating database tables: {e}")
+
 # Create FastAPI app instance
 app = FastAPI(
     title="ESale Backend API",

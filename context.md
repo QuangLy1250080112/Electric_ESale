@@ -102,11 +102,17 @@
     - Time filter (Today, 7 days, 30 days, Custom range). Data and charts automatically and instantly update with animations upon any date selection or changes.
     - Export to Excel groups data by Date, displaying Total Revenue and a unique list of Products (Format: "Product Name - Category Name"). Exported file name dynamically includes the date range for better tracking (e.g. `DoanhThu_YYYY-MM-DD_den_YYYY-MM-DD.xlsx`).
 
+- [x] **Database Migration & Project Cleanup**:
+  - Dumped all data from local PostgreSQL to SQLite (`test.db`) successfully so the project can be run out-of-the-box by cloning the repository.
+  - Consolidated and updated all instructions into a single unified root `README.md` (`npm run dev:all`), deleting redundant sub-READMEs (`backend/README.md` and `frontend/README.md`).
+  - Added `Base.metadata.create_all(bind=engine)` inside `backend/app/main.py` so missing tables are automatically generated on startup if using a fresh database.
+  - Cleaned up redundant and obsolete files (`test_api_post.py`, `test_product_creation.py`, `test_reviews.py`, `check_db.py`, `seed_db.py`, `dump_pg_to_sqlite.py`) to keep the repository clean.
+
 ## Technical Details
 
 - **Backend**: FastAPI, SQLAlchemy, Pydantic, jose (JWT), smtplib
 - **Frontend**: React, Vite, Axios, Zustand (authStore), React Router, Lucide-React, Leaflet
-- **Database**: PostgreSQL (Active)
+- **Database**: PostgreSQL (Active for Dev), SQLite (`test.db` included for instant out-of-the-box evaluation)
 - **Image Storage**: `frontend/public/images/products`, `frontend/public/images/categories`, `frontend/public/images/reviews`
 - **API Base URL**: `http://localhost:8000/api/v1`
 
